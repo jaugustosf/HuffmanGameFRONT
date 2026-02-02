@@ -1,4 +1,4 @@
-```markdown
+
 # 🌳 Huffman Game - Frontend
 
 > Uma aplicação web interativa e gamificada para ensinar o **Algoritmo de Codificação de Huffman**.
@@ -52,7 +52,7 @@ src/
 │   └── useHuffmanGame.js # Custom Hook (Toda a lógica/cérebro do jogo)
 └── ...
 
-```
+
 
 ## ⚙️ Pré-requisitos
 
