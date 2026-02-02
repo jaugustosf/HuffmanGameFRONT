@@ -28,8 +28,8 @@ const HuffmanBoard = () => {
     <div
       className="w-full h-[90vh] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm relative bg-neutral-50 dark:bg-[#1B1B1B] overflow-hidden transition-colors duration-300"
       style={{
-        "--xy-edge-stroke": mounted && theme === "dark" ? "#ffffff" : "#000000",
-        "--xy-edge-label": mounted && theme === "dark" ? "#ffffff" : "#000000",
+        "--xy-edge-stroke": "var(--flow-edge)", // Usa a variável CSS
+        "--xy-edge-label": "var(--flow-edge)",
       }}
     >
       {/* 1. CONTROLES (ESQUERDA) */}
@@ -72,12 +72,8 @@ const HuffmanBoard = () => {
         onNodeDragStart={game.onNodeDragStart}
         onNodeDragStop={game.onNodeDragStop}
         fitView
-        colorMode={mounted && theme === "dark" ? "dark" : "light"}
       >
-        <Background
-          gap={20}
-          color={mounted && theme === "dark" ? "#555555" : "#000000"}
-        />
+        <Background gap={20} color="#000000" style={{ opacity: 0.2 }} />
         <Controls />
       </ReactFlow>
 
