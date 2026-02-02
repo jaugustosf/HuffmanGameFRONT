@@ -81,7 +81,7 @@ const HuffmanBoard = () => {
       >
         <Background
           gap={20}
-          color={resolvedTheme === "dark" ? "#555555" : "#e5e5e5"}
+          color={resolvedTheme === "dark" ? "#555555" : "#000000"}
           variant="dots"
         />
 
