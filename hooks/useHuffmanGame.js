@@ -94,7 +94,7 @@ export const useHuffmanGame = () => {
       const javaNodes = response.data.initialNodes;
 
       const flowNodes = javaNodes.map((node, index) => {
-        const displayLabel = node.character === " " ? "␣" : node.character;
+        const displayLabel = node.character === " " ? "SPACE" : node.character;
         return {
           id: `leaf-${index}-${node.character}`,
           position: { x: index * 90 + 50, y: 500 },
