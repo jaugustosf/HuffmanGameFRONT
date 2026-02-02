@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 
 // --- IMPORTS ---
 import { LEVEL_ORDER, LEVELS } from "@/data/gameLevels";
-import { useHuffmanGame } from "@/hooks/useHuffmanGame"; // <--- O CÉREBRO
+import { useHuffmanGame } from "@/hooks/useHuffmanGame";
 import { GameControls } from "@/components/game/GameControls";
 import { GameInfo } from "@/components/game/GameInfo";
 import { TutorialModal } from "@/components/game/TutorialModal";
@@ -20,18 +20,14 @@ const HuffmanBoard = () => {
   const game = useHuffmanGame();
 
   useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 0);
-    return () => clearTimeout(timer);
+    setMounted(true);
   }, []);
 
+  // Se não estiver montado ainda, não renderiza para evitar mismatch
+  if (!mounted) return null;
+
   return (
-    <div
-      className="w-full h-[90vh] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm relative bg-neutral-50 dark:bg-[#1B1B1B] overflow-hidden transition-colors duration-300"
-      style={{
-        "--xy-edge-stroke": "var(--flow-edge)", // Usa a variável CSS
-        "--xy-edge-label": "var(--flow-edge)",
-      }}
-    >
+    <div className="w-full h-[90vh] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm relative bg-neutral-50 dark:bg-[#1B1B1B] overflow-hidden transition-colors duration-300">
       {/* 1. CONTROLES (ESQUERDA) */}
       <GameControls
         gameMode={game.gameMode}
@@ -62,6 +58,9 @@ const HuffmanBoard = () => {
 
       {/* 3. TABULEIRO (REACT FLOW) */}
       <ReactFlow
+        // A prop KEY força o React a recriar o componente quando o tema muda
+        // Isso resolve 99% dos bugs visuais de troca de tema
+        key={theme}
         nodes={game.nodes}
         edges={game.edges}
         onNodesChange={game.onNodesChange}
@@ -72,9 +71,22 @@ const HuffmanBoard = () => {
         onNodeDragStart={game.onNodeDragStart}
         onNodeDragStop={game.onNodeDragStop}
         fitView
+        // Forçamos o modo de cor aqui
+        colorMode={theme === "dark" ? "dark" : "light"}
+        // Ajustamos o estilo dos nós para garantir contraste
+        style={{
+          color: theme === "dark" ? "#fff" : "#000",
+        }}
       >
-        <Background gap={20} color="#000000" style={{ opacity: 0.2 }} />
-        <Controls />
+        <Background
+          gap={20}
+          // Cor explícita baseada no tema
+          color={theme === "dark" ? "#555555" : "#e5e5e5"}
+          variant="dots"
+        />
+
+        {/* --- CORREÇÃO DOS CONTROLES AQUI --- */}
+        <Controls className="bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 [&>button]:text-black dark:[&>button]:text-white [&>button]:fill-black dark:[&>button]:fill-white [&>button:hover]:bg-neutral-100 dark:[&>button:hover]:bg-neutral-700 [&>button]:border-b-neutral-200 dark:[&>button]:border-b-neutral-700" />
       </ReactFlow>
 
       {/* 4. MODAIS */}
