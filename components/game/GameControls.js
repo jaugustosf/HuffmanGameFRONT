@@ -28,11 +28,9 @@ export const GameControls = ({
   setTheme,
   nodesLength,
   historyLength,
-  gameWon,
   levelCompleted,
   onStartGame,
   onUndo,
-  onValidate,
   onNextLevel,
 }) => {
   return (
@@ -117,16 +115,6 @@ export const GameControls = ({
               <RotateCcw className="w-4 h-4" /> Desfazer
             </Button>
           </div>
-
-          {/* BOTÃO VALIDAR */}
-          {gameWon && !levelCompleted && (
-            <Button
-              onClick={onValidate}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white animate-in fade-in zoom-in duration-300"
-            >
-              <CheckCircle2 className="w-4 h-4 mr-2" /> Validar Árvore
-            </Button>
-          )}
 
           {/* BOTÃO PRÓXIMO NÍVEL */}
           {levelCompleted && (
