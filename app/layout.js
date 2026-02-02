@@ -17,12 +17,11 @@ export default function RootLayout({ children }) {
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="system" // Garante que pega a preferência do OS de cara
           enableSystem
-          disableTransitionOnChange
+          disableTransitionOnChange // Isso evita o flash ao trocar de tema
         >
           {children}
-          <Toaster />
         </ThemeProvider>
       </body>
     </html>

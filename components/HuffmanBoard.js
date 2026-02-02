@@ -20,6 +20,7 @@ const HuffmanBoard = () => {
   const game = useHuffmanGame();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setMounted(true);
   }, []);
 
@@ -27,7 +28,7 @@ const HuffmanBoard = () => {
   if (!mounted) return null;
 
   return (
-    <div className="w-full h-[90vh] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm relative bg-neutral-50 dark:bg-[#1B1B1B] overflow-hidden transition-colors duration-300">
+    <div className="w-full h-[90vh] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm relative bg-neutral-50 dark:bg-[#1B1B1B] overflow-hidden">
       {/* 1. CONTROLES (ESQUERDA) */}
       <GameControls
         gameMode={game.gameMode}
