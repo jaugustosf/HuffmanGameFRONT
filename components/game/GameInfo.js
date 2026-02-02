@@ -6,7 +6,7 @@ export const GameInfo = ({ gameMode, successCount, errorCount }) => {
   return (
     <div className="absolute top-4 right-4 z-10 max-w-xs flex flex-col gap-3">
       <Card className="shadow-md bg-white/90 backdrop-blur dark:bg-neutral-800/90 dark:border-neutral-700">
-        <CardContent className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-300 space-y-2">
+        <CardContent className="px-4 text-sm text-neutral-600 dark:text-neutral-300 space-y-2">
           <p className="font-semibold flex items-center gap-2 text-neutral-800 dark:text-neutral-100">
             <Info className="w-4 h-4" /> Regras:
           </p>

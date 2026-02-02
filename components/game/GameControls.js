@@ -37,12 +37,12 @@ export const GameControls = ({
 }) => {
   return (
     <div className="absolute z-10 top-4 left-4 w-96">
-      <Card className="shadow-lg opacity-95 hover:opacity-100 transition-opacity bg-white dark:bg-neutral-800 dark:border-neutral-700">
-        <CardHeader className="pb-3 pt-4">
-          <div className="flex justify-between items-center mb-2">
+      <Card className="shadow-lg opacity-95 gap-0 hover:opacity-100 transition-opacity bg-white dark:bg-neutral-800 dark:border-neutral-700">
+        <CardHeader className="pb-1 pt-2">
+          <div className="flex justify-between items-center">
             {/* --- DISPLAY DE NÍVEL --- */}
             {gameMode === "campaign" ? (
-              <div className="flex flex-col items-start gap-1">
+              <div className="flex flex-col items-start gap-2">
                 <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-neutral-400">
                   Nível:{" "}
                   <strong className="ml-1 uppercase text-blue-600 dark:text-blue-400">
