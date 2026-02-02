@@ -1,9 +1,3 @@
-Aqui está um modelo de **README.md** profissional, estruturado e formatado especificamente para o seu projeto, destacando a tecnologia moderna (Next.js 16, React Flow) e a arquitetura limpa que acabamos de implementar.
-
-Você pode copiar e colar direto no arquivo `README.md` da raiz do seu projeto.
-
----
-
 ```markdown
 # 🌳 Huffman Game - Frontend
 
