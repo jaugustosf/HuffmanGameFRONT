@@ -24,7 +24,7 @@ export const GameControls = ({
   currentWordIndex,
   totalWordsInLevel,
   mounted,
-  theme,
+  theme, // Recebe o resolvedTheme
   setTheme,
   nodesLength,
   historyLength,
@@ -37,12 +37,12 @@ export const GameControls = ({
 }) => {
   return (
     <div className="absolute z-10 top-4 left-4 w-96">
-      <Card className="shadow-lg opacity-95 hover:opacity-100 gap-0 transition-opacity bg-white dark:bg-neutral-800 dark:border-neutral-700">
+      <Card className="shadow-lg opacity-95 hover:opacity-100 transition-opacity bg-white dark:bg-neutral-800 dark:border-neutral-700">
         <CardHeader className="pb-3 pt-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-2">
             {/* --- DISPLAY DE NÍVEL --- */}
             {gameMode === "campaign" ? (
-              <div className="flex flex-col items-start gap-2">
+              <div className="flex flex-col items-start gap-1">
                 <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-neutral-400">
                   Nível:{" "}
                   <strong className="ml-1 uppercase text-blue-600 dark:text-blue-400">
@@ -58,19 +58,21 @@ export const GameControls = ({
                 </span>
               </div>
             ) : (
-              <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-transparent bg-yellow-300 text-black hover:bg-yellow-400">
+              <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-transparent bg-purple-600 text-white hover:bg-purple-700">
                 MODO LIVRE
               </span>
             )}
 
-            {/* --- DARK MODE --- */}
+            {/* --- DARK MODE CORRIGIDO --- */}
             {mounted && (
               <Button
                 variant="ghost"
                 size="icon"
+                // Se está 'dark', ao clicar vira 'light', e vice-versa
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className="h-8 w-8 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700"
               >
+                {/* Se o tema resolvido for dark, mostra o Sol para indicar que pode ir pro light */}
                 {theme === "dark" ? (
                   <Sun className="h-4 w-4" />
                 ) : (

@@ -87,13 +87,15 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+
+    /* Configuração para evitar flash */
     color-scheme: light;
 }
 
 .dark {
     /* --- CONFIGURAÇÃO REACT FLOW (DARK) --- */
     --flow-edge: #ffffff;
-    --flow-bg: #262626; /* Um pouco mais escuro que o background normal */
+    --flow-bg: #262626;
     --flow-node-bg: #262626;
     --flow-node-text: #f5f5f5;
     --flow-node-border: #525252;
@@ -130,6 +132,8 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+
+    /* Configuração para evitar flash */
     color-scheme: dark;
 }
 
@@ -140,32 +144,4 @@
     body {
         @apply bg-background text-foreground;
     }
-}
-
-/* ... resto do seu arquivo globals.css ... */
-
-/* FORÇAR CONTROLES DO REACT FLOW NO DARK MODE */
-.dark .react-flow__controls {
-    background-color: #262626; /* Cor escura do Card */
-    border-color: #525252;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-}
-
-.dark .react-flow__controls-button {
-    background-color: #262626;
-    border-bottom: 1px solid #525252;
-    fill: #f5f5f5; /* Ícone branco */
-}
-
-.dark .react-flow__controls-button:hover {
-    background-color: #404040;
-}
-
-.dark .react-flow__controls-button svg {
-    fill: #f5f5f5;
-}
-
-/* FORÇAR MINIMAP (Se usar) */
-.dark .react-flow__minimap {
-    background-color: #262626;
 }

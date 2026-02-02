@@ -16,7 +16,6 @@ export const TutorialModal = ({ open, onOpenChange }) => {
   const handleNext = () => setStep((prev) => prev + 1);
   const handleClose = () => {
     onOpenChange(false);
-    // Reseta para o passo 1 na próxima vez que abrir (opcional)
     setTimeout(() => setStep(1), 300);
   };
 

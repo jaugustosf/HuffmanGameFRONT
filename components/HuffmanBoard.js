@@ -3,7 +3,6 @@ import { ReactFlow, Background, Controls } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
 
-// --- IMPORTS ---
 import { LEVEL_ORDER, LEVELS } from "@/data/gameLevels";
 import { useHuffmanGame } from "@/hooks/useHuffmanGame";
 import { GameControls } from "@/components/game/GameControls";
@@ -13,18 +12,20 @@ import { DeleteModal } from "@/components/game/DeleteModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
 
 const HuffmanBoard = () => {
-  const { theme, setTheme } = useTheme();
+  // TRUQUE 1: Pegar o resolvedTheme para saber a cor real
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Puxa TODA a lógica do hook
+  // Hook principal de lógica
   const game = useHuffmanGame();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // TRUQUE 2: Silenciar o aviso de setState no effect (necessário para theme mismatch)
+    // eslint-disable-next-line
     setMounted(true);
   }, []);
 
-  // Se não estiver montado ainda, não renderiza para evitar mismatch
+  // Se não montou, não renderiza nada para evitar flash
   if (!mounted) return null;
 
   return (
@@ -38,7 +39,8 @@ const HuffmanBoard = () => {
         currentWordIndex={game.currentWordIndex}
         totalWordsInLevel={LEVELS[LEVEL_ORDER[game.currentLevelDiff]].length}
         mounted={mounted}
-        theme={theme}
+        // Passamos o tema RESOLVIDO para o controle exibir o ícone certo
+        theme={resolvedTheme}
         setTheme={setTheme}
         nodesLength={game.nodes.length}
         historyLength={game.history.length}
@@ -59,9 +61,8 @@ const HuffmanBoard = () => {
 
       {/* 3. TABULEIRO (REACT FLOW) */}
       <ReactFlow
-        // A prop KEY força o React a recriar o componente quando o tema muda
-        // Isso resolve 99% dos bugs visuais de troca de tema
-        key={theme}
+        // TRUQUE 3: Key força redesenho ao trocar tema
+        key={resolvedTheme}
         nodes={game.nodes}
         edges={game.edges}
         onNodesChange={game.onNodesChange}
@@ -72,21 +73,19 @@ const HuffmanBoard = () => {
         onNodeDragStart={game.onNodeDragStart}
         onNodeDragStop={game.onNodeDragStop}
         fitView
-        // Forçamos o modo de cor aqui
-        colorMode={theme === "dark" ? "dark" : "light"}
-        // Ajustamos o estilo dos nós para garantir contraste
+        // Define o modo explicitamente
+        colorMode={resolvedTheme === "dark" ? "dark" : "light"}
         style={{
-          color: theme === "dark" ? "#fff" : "#000",
+          color: resolvedTheme === "dark" ? "#fff" : "#000",
         }}
       >
         <Background
           gap={20}
-          // Cor explícita baseada no tema
-          color={theme === "dark" ? "#555555" : "#e5e5e5"}
+          color={resolvedTheme === "dark" ? "#555555" : "#e5e5e5"}
           variant="dots"
         />
 
-        {/* --- CORREÇÃO DOS CONTROLES AQUI --- */}
+        {/* TRUQUE 4: Estilização manual dos controles via Tailwind */}
         <Controls className="bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 [&>button]:text-black dark:[&>button]:text-white [&>button]:fill-black dark:[&>button]:fill-white [&>button:hover]:bg-neutral-100 dark:[&>button:hover]:bg-neutral-700 [&>button]:border-b-neutral-200 dark:[&>button]:border-b-neutral-700" />
       </ReactFlow>
 
