@@ -66,7 +66,7 @@ Antes de começar, certifique-se de ter instalado:
 
 1. **Clone o repositório:**
 ```bash
-git clone [https://github.com/jaugustosf/huffman-game-frontend.git](https://github.com/jaugustosf/huffman-game-frontend.git)
+git clone [https://github.com/jaugustosf/HuffmanGameFRONT](https://github.com/jaugustosf/HuffmanGameFRONT)
 cd huffman-game-frontend
 ```
 2. **Instale as dependências:**
