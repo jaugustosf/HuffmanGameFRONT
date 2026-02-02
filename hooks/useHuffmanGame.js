@@ -5,7 +5,10 @@ import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { LEVELS, LEVEL_ORDER } from "@/data/gameLevels";
 
-// Função auxiliar movida para fora ou utilitário
+// Define a URL da API: Usa a da Vercel (se existir) ou cai para localhost
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+// Função auxiliar para detectar se houve movimento (para o Undo)
 const hasPositionChanged = (nodesA, nodesB) => {
   if (nodesA.length !== nodesB.length) return true;
   for (let i = 0; i < nodesA.length; i++) {
@@ -49,7 +52,7 @@ export const useHuffmanGame = () => {
 
   const beforeDragSnapshot = useRef(null);
 
-  // Inicializa a palavra da campanha
+  // Inicializa a palavra da campanha quando muda o nível
   useEffect(() => {
     if (gameMode === "campaign" && !word) {
       const diffKey = LEVEL_ORDER[currentLevelDiff];
@@ -57,7 +60,7 @@ export const useHuffmanGame = () => {
     }
   }, [gameMode, currentLevelDiff, currentWordIndex, word]);
 
-  // Detecção de Vitória (Visual)
+  // Detecção de Vitória (Visual - quando sobra apenas 1 nó raiz)
   useEffect(() => {
     if (nodes.length === 0) return;
     const activeNodes = nodes.filter((n) => !n.data.isUsed);
@@ -88,9 +91,10 @@ export const useHuffmanGame = () => {
       toast.error("Campo vazio");
       return;
     }
+
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/game/start",
+        `${API_URL}/api/game/start`,
         wordToPlay,
         {
           headers: { "Content-Type": "text/plain" },
@@ -99,7 +103,8 @@ export const useHuffmanGame = () => {
       const javaNodes = response.data.initialNodes;
 
       const flowNodes = javaNodes.map((node, index) => {
-        const displayLabel = node.character === " " ? "SPACE" : node.character;
+        // Truque visual para o Espaço
+        const displayLabel = node.character === " " ? "␣" : node.character;
         return {
           id: `leaf-${index}-${node.character}`,
           position: { x: index * 90 + 50, y: 500 },
@@ -112,11 +117,13 @@ export const useHuffmanGame = () => {
             level: 0,
           },
           type: "default",
+          // Estilização condicional para destacar o Espaço
           className: `${node.character === " " ? "bg-neutral-100 dark:bg-neutral-700" : "bg-white dark:bg-neutral-800"} dark:text-neutral-100 border-2 border-neutral-400 dark:border-neutral-600 rounded-lg shadow-sm font-bold flex justify-center items-center text-xs`,
           style: { width: 50, height: 50 },
         };
       });
 
+      // Resetar mesa
       setHistory([]);
       setNodes(flowNodes);
       setEdges([]);
@@ -130,7 +137,9 @@ export const useHuffmanGame = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Erro de Conexão");
+      toast.error("Erro de Conexão", {
+        description: "Verifique se o Backend Java está rodando.",
+      });
     }
   };
 
@@ -145,11 +154,13 @@ export const useHuffmanGame = () => {
     setLevelCompleted(false);
 
     if (currentWordIndex + 1 < currentList.length) {
+      // Próxima palavra do mesmo nível
       const nextWord = currentList[currentWordIndex + 1];
       setCurrentWordIndex((prev) => prev + 1);
       setWord(nextWord);
       setTimeout(() => handleStartGame(nextWord), 100);
     } else {
+      // Mudança de Dificuldade
       if (currentLevelDiff + 1 < LEVEL_ORDER.length) {
         const nextDiffIndex = currentLevelDiff + 1;
         const nextDiffKey = LEVEL_ORDER[nextDiffIndex];
@@ -160,6 +171,7 @@ export const useHuffmanGame = () => {
         toast.info(`Nível ${nextDiffKey} Desbloqueado!`);
         setTimeout(() => handleStartGame(nextWord), 100);
       } else {
+        // Fim da Campanha
         setShowEndCampaignModal(true);
         confetti({ particleCount: 500, spread: 180 });
       }
@@ -190,6 +202,7 @@ export const useHuffmanGame = () => {
 
   const handleValidateTree = async () => {
     const targets = new Set(edges.map((e) => e.target));
+    // Procura o nó raiz (aquele que não é alvo de ninguém e não foi usado)
     const rootNode = nodes.find((n) => !targets.has(n.id) && !n.data.isUsed);
 
     if (!rootNode) {
@@ -199,6 +212,7 @@ export const useHuffmanGame = () => {
       return;
     }
 
+    // Monta a estrutura para enviar ao Java
     const treeStructure = nodes
       .filter((n) => n.id.startsWith("parent-"))
       .map((parentNode) => {
@@ -217,7 +231,7 @@ export const useHuffmanGame = () => {
       .filter((n) => !n.id.startsWith("parent-"))
       .map((n) => ({
         id: n.id,
-        character: n.data.label.split(" ")[0],
+        character: n.data.label.split(" ")[0], // Pega só o char, ignora frequência visual
         frequency: n.data.frequency,
       }));
 
@@ -225,7 +239,7 @@ export const useHuffmanGame = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/game/validate",
+        `${API_URL}/api/game/validate`,
         payload,
       );
       if (response.data.isValid) {
@@ -262,12 +276,16 @@ export const useHuffmanGame = () => {
   const undo = useCallback(() => {
     if (history.length === 0) return;
     const lastSnapshot = history[history.length - 1];
+
+    // Proteção contra snapshot vazio
     if (!lastSnapshot?.nodes) {
       setHistory((prev) => prev.slice(0, prev.length - 1));
       return;
     }
+
     setNodes(lastSnapshot.nodes);
     setEdges(lastSnapshot.edges);
+
     if (lastSnapshot.score) {
       setSuccessCount(lastSnapshot.score.success);
       setErrorCount(lastSnapshot.score.error);
@@ -278,18 +296,18 @@ export const useHuffmanGame = () => {
     toast.info("Ação desfeita");
   }, [history, setNodes, setEdges]);
 
-  // Hook do teclado para Undo (Ctrl+Z)
+  // Atalho de Teclado (Ctrl+Z)
   useEffect(() => {
     const handleKeyDown = (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key === "z") {
         if (["INPUT", "TEXTAREA"].includes(event.target.tagName)) return;
         event.preventDefault();
-        undo(); // Chama a função undo diretamente
+        undo();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo]); // Undo na dependência garante que pegue o estado atual
+  }, [undo]);
 
   const onNodeDragStart = useCallback(() => {
     beforeDragSnapshot.current = {
@@ -315,11 +333,15 @@ export const useHuffmanGame = () => {
   const isValidHuffmanMove = (nodeA, nodeB, allNodes) => {
     const availableNodes = allNodes.filter((n) => !n.data.isUsed);
     availableNodes.sort((a, b) => a.data.frequency - b.data.frequency);
+
     if (availableNodes.length < 2) return false;
+
     const min1 = availableNodes[0].data.frequency;
     const min2 = availableNodes[1].data.frequency;
     const selected1 = nodeA.data.frequency;
     const selected2 = nodeB.data.frequency;
+
+    // Regra: Os dois selecionados devem ter as frequências iguais aos dois menores da mesa
     return (
       (selected1 === min1 && selected2 === min2) ||
       (selected1 === min2 && selected2 === min1)
@@ -330,9 +352,13 @@ export const useHuffmanGame = () => {
     if (!nodeToDelete) return;
     pushToHistory();
     const parentId = nodeToDelete;
+
     setEdges((currentEdges) => {
+      // Descobre quem eram os filhos dessa conexão
       const edgesDoPai = currentEdges.filter((e) => e.source === parentId);
       const idsDosFilhos = edgesDoPai.map((e) => e.target);
+
+      // Reativa os filhos
       setNodes((currentNodes) => {
         const nodesSemPai = currentNodes.filter((n) => n.id !== parentId);
         return nodesSemPai.map((n) => {
@@ -348,6 +374,7 @@ export const useHuffmanGame = () => {
       });
       return currentEdges.filter((e) => e.source !== parentId);
     });
+
     toast.success("Conexão desfeita.");
     setNodeToDelete(null);
   }, [nodeToDelete, setNodes, setEdges, pushToHistory]);
@@ -359,13 +386,17 @@ export const useHuffmanGame = () => {
       const targetNode = nodes.find((n) => n.id === target);
 
       if (!sourceNode || !targetNode || source === target) return;
+
+      // Validações
       if (sourceNode.data.isUsed || targetNode.data.isUsed) {
         toast.warning("Nó ocupado");
         return;
       }
 
       if (!isValidHuffmanMove(sourceNode, targetNode, nodes)) {
-        toast.error("Movimento Inválido!");
+        toast.error("Movimento Inválido!", {
+          description: "Sempre una os menores valores.",
+        });
         setErrorCount((prev) => prev + 1);
         return;
       } else {
@@ -374,7 +405,7 @@ export const useHuffmanGame = () => {
 
       pushToHistory();
 
-      // Lógica visual da conexão
+      // --- CÁLCULO VISUAL DA POSIÇÃO DO PAI ---
       const MIN_DISTANCE = 250;
       const IDEAL_GAP = 120;
       let finalSourceX = sourceNode.position.x;
@@ -385,6 +416,7 @@ export const useHuffmanGame = () => {
       const levelA = sourceNode.data.level || 0;
       const levelB = targetNode.data.level || 0;
 
+      // Aproxima nós se estiverem muito longe
       if (currentDistance > MIN_DISTANCE && !(levelA > 0 && levelB > 0)) {
         if (levelA < levelB) {
           finalSourceX =
@@ -403,17 +435,20 @@ export const useHuffmanGame = () => {
               : targetNode.position.x + IDEAL_GAP;
         }
       }
+
       const topY = Math.min(sourceNode.position.y, targetNode.position.y);
-      const parentY = topY - 100;
-      const centerA = finalSourceX + 40 / 2;
+      const parentY = topY - 100; // Pai fica 100px acima
+
+      const centerA = finalSourceX + 40 / 2; // 40 é metade da largura aprox
       const centerB = finalTargetX + 40 / 2;
-      const parentX = Math.round((centerA + centerB) / 2 - 80 / 2);
+      const parentX = Math.round((centerA + centerB) / 2 - 80 / 2); // 80 é largura do pai
 
       const newFrequency =
         sourceNode.data.frequency + targetNode.data.frequency;
       const newId = `parent-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const newLevel = Math.max(levelA, levelB) + 1;
 
+      // Cria Nó Pai
       const parentNode = {
         id: newId,
         position: { x: parentX, y: parentY },
@@ -440,6 +475,7 @@ export const useHuffmanGame = () => {
         },
       };
 
+      // Atualiza Nós (Desativa filhos, adiciona pai)
       setNodes((nds) => {
         const cleanNodes = nds.filter((n) => n.id !== parentNode.id);
         return cleanNodes
@@ -463,14 +499,16 @@ export const useHuffmanGame = () => {
           .concat(parentNode);
       });
 
+      // Cria Arestas (0 esquerda, 1 direita)
       setEdges((eds) => {
         const isSourceLeft = finalSourceX < finalTargetX;
+
         const commonStyle = { stroke: "var(--xy-edge-stroke)", strokeWidth: 2 };
         const labelStyle = {
           fontWeight: 600,
           fontSize: 12,
           fill: "var(--xy-edge-label)",
-        }; // Usando variável CSS ou fixo
+        };
         const edgeConfig = {
           type: "smoothstep",
           pathOptions: { borderRadius: 10 },
@@ -493,6 +531,7 @@ export const useHuffmanGame = () => {
           label: isSourceLeft ? "1" : "0",
           ...edgeConfig,
         };
+
         return [
           ...eds.filter((e) => e.id !== edge1.id && e.id !== edge2.id),
           edge1,
@@ -523,9 +562,8 @@ export const useHuffmanGame = () => {
     setNodeToDelete(edge.source);
   }, []);
 
-  // --- RETORNO DO HOOK (Tudo que a View precisa) ---
+  // --- RETORNO DO HOOK ---
   return {
-    // States
     gameMode,
     currentLevelDiff,
     currentWordIndex,
@@ -545,7 +583,6 @@ export const useHuffmanGame = () => {
     nodeToDelete,
     setNodeToDelete,
 
-    // Handlers
     onNodesChange,
     onEdgesChange,
     handleStartGame,
