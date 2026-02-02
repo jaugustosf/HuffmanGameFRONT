@@ -104,7 +104,7 @@ export const useHuffmanGame = () => {
 
       const flowNodes = javaNodes.map((node, index) => {
         // Truque visual para o Espaço
-        const displayLabel = node.character === " " ? "␣" : node.character;
+        const displayLabel = node.character === " " ? "SPACE" : node.character;
         return {
           id: `leaf-${index}-${node.character}`,
           position: { x: index * 90 + 50, y: 500 },
