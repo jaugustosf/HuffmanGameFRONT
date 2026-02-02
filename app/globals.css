@@ -90,6 +90,7 @@
 
     /* Configuração para evitar flash */
     color-scheme: light;
+    --xy-edge-stroke: var(--flow-edge);
 }
 
 .dark {
@@ -135,6 +136,8 @@
 
     /* Configuração para evitar flash */
     color-scheme: dark;
+    --xy-edge-stroke: var(--flow-edge);
+    --xy-edge-label: white;
 }
 
 @layer base {
