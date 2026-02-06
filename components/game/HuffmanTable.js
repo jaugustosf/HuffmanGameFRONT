@@ -75,7 +75,7 @@ export const HuffmanTable = ({ nodes, edges }) => {
                 key={row.char}
                 className="grid grid-cols-3 p-2 border-b border-neutral-100 dark:border-neutral-800 last:border-0 items-center hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors"
               >
-                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                <span className="font-mono font-bold text-green-600 dark:text-green-400">
                   {row.char === "␣" ? "Espaço" : row.char}
                 </span>
                 <span className="text-center font-mono text-[10px] bg-neutral-100 dark:bg-neutral-950 rounded px-1 py-0.5 text-neutral-800 dark:text-neutral-200 truncate mx-1">
