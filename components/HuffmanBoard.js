@@ -10,6 +10,7 @@ import { GameInfo } from "@/components/game/GameInfo";
 import { TutorialModal } from "@/components/game/TutorialModal";
 import { DeleteModal } from "@/components/game/DeleteModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
+import { HuffmanTable } from "@/components/game/HuffmanTable";
 
 const HuffmanBoard = () => {
   // TRUQUE 1: Pegar o resolvedTheme para saber a cor real
@@ -20,7 +21,7 @@ const HuffmanBoard = () => {
   const game = useHuffmanGame();
 
   useEffect(() => {
-    // TRUQUE 2: Silenciar o aviso de setState no effect (necessário para theme mismatch)
+    // TRUQUE 2: Silenciar o aviso de setState no effect
     // eslint-disable-next-line
     setMounted(true);
   }, []);
@@ -52,12 +53,24 @@ const HuffmanBoard = () => {
         onNextLevel={game.handleNextLevel}
       />
 
-      {/* 2. INFO (DIREITA) */}
-      <GameInfo
-        gameMode={game.gameMode}
-        successCount={game.successCount}
-        errorCount={game.errorCount}
-      />
+      {/* 2. INFO + TABELA (DIREITA) - AGRUPADOS */}
+      <div className="absolute top-4 right-4 z-10 w-80 flex flex-col gap-3 max-h-[90vh] overflow-y-auto pr-1 pb-4 scrollbar-hide">
+        {/* O Placar fica sempre visível */}
+        <GameInfo
+          gameMode={game.gameMode}
+          successCount={game.successCount}
+          errorCount={game.errorCount}
+        />
+
+        {/* ALTERAÇÃO AQUI: A Tabela só aparece se o nível estiver completo */}
+        <div
+          className={`transition-all duration-500 ease-in-out ${game.levelCompleted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none absolute"}`}
+        >
+          {game.levelCompleted && (
+            <HuffmanTable nodes={game.nodes} edges={game.edges} />
+          )}
+        </div>
+      </div>
 
       {/* 3. TABULEIRO (REACT FLOW) */}
       <ReactFlow
@@ -81,6 +94,7 @@ const HuffmanBoard = () => {
       >
         <Background
           gap={20}
+          // Ajustei para o cinza escuro no dark e preto no light para contraste
           color={resolvedTheme === "dark" ? "#555555" : "#000000"}
           variant="dots"
         />
