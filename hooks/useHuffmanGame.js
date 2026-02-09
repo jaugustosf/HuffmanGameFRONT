@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { LEVELS, LEVEL_ORDER } from "@/data/gameLevels";
 
-// Pega URL do ambiente ou usa localhost
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 const hasPositionChanged = (nodesA, nodesB) => {
@@ -25,35 +24,28 @@ const hasPositionChanged = (nodesA, nodesB) => {
 };
 
 export const useHuffmanGame = () => {
-  // --- ESTADOS DE CONTROLE DO JOGO ---
   const [gameMode, setGameMode] = useState("campaign");
   const [currentLevelDiff, setCurrentLevelDiff] = useState(0);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [word, setWord] = useState("");
 
-  // --- ESTADOS DO REACT FLOW ---
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  // --- ESTADOS DE FLUXO ---
   const [history, setHistory] = useState([]);
   const [nodeToDelete, setNodeToDelete] = useState(null);
 
-  // Note: Removemos 'gameWon' pois a validação agora é automática
   const [levelCompleted, setLevelCompleted] = useState(false);
-  const [isValidating, setIsValidating] = useState(false); // Evita chamadas duplas
+  const [isValidating, setIsValidating] = useState(false);
 
-  // --- MODAIS ---
   const [showEndCampaignModal, setShowEndCampaignModal] = useState(false);
   const [showTutorial, setShowTutorial] = useState(true);
 
-  // --- PLACAR ---
   const [successCount, setSuccessCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
 
   const beforeDragSnapshot = useRef(null);
 
-  // Inicializa a palavra da campanha
   useEffect(() => {
     if (gameMode === "campaign" && !word) {
       const diffKey = LEVEL_ORDER[currentLevelDiff];
@@ -61,17 +53,12 @@ export const useHuffmanGame = () => {
     }
   }, [gameMode, currentLevelDiff, currentWordIndex, word]);
 
-  // ----------------------------------------------------------------------
-  // AÇÕES PRINCIPAIS (Start, Next, Finish)
-  // ----------------------------------------------------------------------
-
   const handleStartGame = async (wordToPlay = word) => {
     if (!wordToPlay.trim()) {
       toast.error("Campo vazio");
       return;
     }
 
-    // Reset visual
     setNodes([]);
     setEdges([]);
     setHistory([]);
@@ -124,7 +111,6 @@ export const useHuffmanGame = () => {
     const diffKey = LEVEL_ORDER[currentLevelDiff];
     const currentList = LEVELS[diffKey];
 
-    // Limpa a mesa
     setNodes([]);
     setEdges([]);
     setHistory([]);
@@ -132,13 +118,11 @@ export const useHuffmanGame = () => {
     setIsValidating(false);
 
     if (currentWordIndex + 1 < currentList.length) {
-      // Próxima palavra do mesmo nível
       const nextWord = currentList[currentWordIndex + 1];
       setCurrentWordIndex((prev) => prev + 1);
       setWord(nextWord);
       setTimeout(() => handleStartGame(nextWord), 100);
     } else {
-      // Próximo nível de dificuldade
       if (currentLevelDiff + 1 < LEVEL_ORDER.length) {
         const nextDiffIndex = currentLevelDiff + 1;
         const nextDiffKey = LEVEL_ORDER[nextDiffIndex];
@@ -149,7 +133,6 @@ export const useHuffmanGame = () => {
         toast.info(`Nível ${nextDiffKey} Desbloqueado!`);
         setTimeout(() => handleStartGame(nextWord), 100);
       } else {
-        // Fim do Jogo
         setShowEndCampaignModal(true);
         confetti({ particleCount: 500, spread: 180 });
       }
@@ -178,79 +161,38 @@ export const useHuffmanGame = () => {
     toast.info("Campanha Reiniciada!");
   };
 
-  // ----------------------------------------------------------------------
-  // LÓGICA DE VALIDAÇÃO (AUTOMÁTICA)
-  // ----------------------------------------------------------------------
-
-  const handleValidateTree = useCallback(async () => {
-    // Validação de segurança: precisa ter 1 nó, não estar completo e não estar validando
-    if (nodes.length === 0 || levelCompleted || isValidating) return;
-
-    // Verifica se o único nó ativo é um Pai (raiz)
+  const handleValidateTree = useCallback(() => {
     const activeNodes = nodes.filter((n) => !n.data.isUsed);
-    if (activeNodes.length !== 1 || !activeNodes[0].id.startsWith("parent-"))
-      return;
 
-    setIsValidating(true); // Bloqueia
+    if (activeNodes.length !== 1 || levelCompleted || isValidating) return;
 
-    const treeStructure = nodes
-      .filter((n) => n.id.startsWith("parent-"))
-      .map((parentNode) => {
-        const childrenEdges = edges.filter((e) => e.source === parentNode.id);
-        const leftEdge = childrenEdges.find((e) => e.label === "0");
-        const rightEdge = childrenEdges.find((e) => e.label === "1");
-        return {
-          parentId: parentNode.id,
-          leftId: leftEdge ? leftEdge.target : null,
-          rightId: rightEdge ? rightEdge.target : null,
-          frequency: parentNode.data.frequency,
-        };
-      });
+    const rootNode = activeNodes[0];
 
-    const leafNodes = nodes
-      .filter((n) => !n.id.startsWith("parent-"))
-      .map((n) => ({
-        id: n.id,
-        character: n.data.label.split(" ")[0],
-        frequency: n.data.frequency,
-      }));
+    if (!rootNode.id.startsWith("parent-")) return;
 
-    const payload = { word: word, structure: treeStructure, leaves: leafNodes };
+    setIsValidating(true);
 
-    try {
-      const response = await axios.post(
-        `${API_URL}/api/game/validate`,
-        payload,
-      );
-      if (response.data.isValid) {
-        toast.success("Perfeito! Árvore completa.", { duration: 3000 });
-        setLevelCompleted(true);
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-      } else {
-        // Caso raríssimo (pois o front bloqueia movimentos errados), mas tratamos
-        toast.error("Ops!", { description: response.data.message });
-        setErrorCount((prev) => prev + 1);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro na Validação");
-    } finally {
+    const timer = setTimeout(() => {
+      toast.success("Árvore Completa!", { description: "Nível finalizado." });
+
+      setLevelCompleted(true);
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+
       setIsValidating(false);
-    }
-  }, [nodes, edges, word, levelCompleted, isValidating]);
+    }, 100);
 
-  // EFEITO: Monitora se a árvore foi finalizada para validar automaticamente
+    return () => clearTimeout(timer);
+  }, [nodes, levelCompleted, isValidating]);
+
   useEffect(() => {
     const activeNodes = nodes.filter((n) => !n.data.isUsed);
 
-    // Se sobrou apenas 1 nó e é um PARENT (não é uma letra solta)
     if (
       activeNodes.length === 1 &&
       activeNodes[0].id.startsWith("parent-") &&
       !levelCompleted &&
       !isValidating
     ) {
-      // Pequeno delay para a animação de conexão terminar antes de validar
       const timer = setTimeout(() => {
         handleValidateTree();
       }, 500);
@@ -258,28 +200,21 @@ export const useHuffmanGame = () => {
     }
   }, [nodes, levelCompleted, isValidating, handleValidateTree]);
 
-  // ----------------------------------------------------------------------
-  // INTERAÇÕES REACT FLOW (Undo, Connect, Drag, Delete)
-  // ----------------------------------------------------------------------
-
   const undo = useCallback(() => {
     if (history.length === 0) return;
     const lastSnapshot = history[history.length - 1];
 
-    // Restaura estado anterior
     setNodes(lastSnapshot.nodes);
     setEdges(lastSnapshot.edges);
     setSuccessCount(lastSnapshot.score?.success || 0);
     setErrorCount(lastSnapshot.score?.error || 0);
 
-    // Remove do histórico
     setHistory((prev) => prev.slice(0, prev.length - 1));
-    setLevelCompleted(false); // Se desfez, não está mais completo
+    setLevelCompleted(false);
     setIsValidating(false);
     toast.info("Ação desfeita");
   }, [history, setNodes, setEdges]);
 
-  // Atalho de Teclado (Ctrl+Z)
   useEffect(() => {
     const handleKeyDown = (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key === "z") {
@@ -318,7 +253,6 @@ export const useHuffmanGame = () => {
     availableNodes.sort((a, b) => a.data.frequency - b.data.frequency);
     if (availableNodes.length < 2) return false;
 
-    // Regra: Deve conectar os dois menores
     const min1 = availableNodes[0].data.frequency;
     const min2 = availableNodes[1].data.frequency;
     const selected1 = nodeA.data.frequency;
@@ -333,7 +267,6 @@ export const useHuffmanGame = () => {
   const confirmDelete = useCallback(() => {
     if (!nodeToDelete) return;
 
-    // Salva histórico antes de deletar
     setHistory((prev) => [
       ...prev,
       {
@@ -349,7 +282,6 @@ export const useHuffmanGame = () => {
 
     const parentId = nodeToDelete;
 
-    // Remove arestas e reativa os filhos
     setEdges((currentEdges) => {
       const edgesDoPai = currentEdges.filter((e) => e.source === parentId);
       const idsDosFilhos = edgesDoPai.map((e) => e.target);
@@ -394,7 +326,6 @@ export const useHuffmanGame = () => {
         return;
       }
 
-      // Validação da Regra de Huffman
       if (!isValidHuffmanMove(sourceNode, targetNode, nodes)) {
         toast.error("Movimento Inválido!", {
           description: "Una sempre os menores valores.",
@@ -405,7 +336,6 @@ export const useHuffmanGame = () => {
         setSuccessCount((prev) => prev + 1);
       }
 
-      // Salva estado antes da conexão
       setHistory((prev) => [
         ...prev,
         {
@@ -419,7 +349,6 @@ export const useHuffmanGame = () => {
         },
       ]);
 
-      // Lógica visual da conexão (Posicionamento inteligente)
       const MIN_DISTANCE = 250;
       const IDEAL_GAP = 120;
       let finalSourceX = sourceNode.position.x;
@@ -459,7 +388,6 @@ export const useHuffmanGame = () => {
       const newId = `parent-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const newLevel = Math.max(levelA, levelB) + 1;
 
-      // Cria o nó Pai
       const parentNode = {
         id: newId,
         position: { x: parentX, y: parentY },
@@ -486,7 +414,6 @@ export const useHuffmanGame = () => {
         },
       };
 
-      // Atualiza Nós
       setNodes((nds) => {
         const cleanNodes = nds.filter((n) => n.id !== parentNode.id);
         return cleanNodes
@@ -510,10 +437,8 @@ export const useHuffmanGame = () => {
           .concat(parentNode);
       });
 
-      // Atualiza Arestas
       setEdges((eds) => {
         const isSourceLeft = finalSourceX < finalTargetX;
-        // CSS variables will handle colors via style prop in HuffmanBoard or globals.css
         const commonStyle = { strokeWidth: 2 };
         const labelStyle = { fontWeight: 600, fontSize: 12 };
         const edgeConfig = {
@@ -576,7 +501,6 @@ export const useHuffmanGame = () => {
     setNodeToDelete(edge.source);
   }, []);
 
-  // --- RETORNO DO HOOK ---
   return {
     gameMode,
     currentLevelDiff,
@@ -586,7 +510,7 @@ export const useHuffmanGame = () => {
     nodes,
     edges,
     history,
-    levelCompleted, // Estado de sucesso (para mostrar botão Next)
+    levelCompleted,
     showEndCampaignModal,
     setShowEndCampaignModal,
     showTutorial,

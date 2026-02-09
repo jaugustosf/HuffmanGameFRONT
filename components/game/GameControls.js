@@ -24,7 +24,7 @@ export const GameControls = ({
   currentWordIndex,
   totalWordsInLevel,
   mounted,
-  theme, // Recebe o resolvedTheme
+  theme,
   setTheme,
   nodesLength,
   historyLength,
@@ -38,7 +38,6 @@ export const GameControls = ({
       <Card className="shadow-lg opacity-95 gap-0 hover:opacity-100 transition-opacity bg-white dark:bg-neutral-800 dark:border-neutral-700">
         <CardHeader className="pb-1 pt-2">
           <div className="flex justify-between items-center">
-            {/* --- DISPLAY DE NÍVEL --- */}
             {gameMode === "campaign" ? (
               <div className="flex flex-col items-start gap-2">
                 <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-neutral-400">
@@ -61,16 +60,13 @@ export const GameControls = ({
               </span>
             )}
 
-            {/* --- DARK MODE CORRIGIDO --- */}
             {mounted && (
               <Button
                 variant="ghost"
                 size="icon"
-                // Se está 'dark', ao clicar vira 'light', e vice-versa
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className="h-8 w-8 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700"
               >
-                {/* Se o tema resolvido for dark, mostra o Sol para indicar que pode ir pro light */}
                 {theme === "dark" ? (
                   <Sun className="h-4 w-4" />
                 ) : (
@@ -82,7 +78,6 @@ export const GameControls = ({
         </CardHeader>
 
         <CardContent className="grid gap-3">
-          {/* Input só aparece no MODO LIVRE */}
           {gameMode === "free" && (
             <div className="flex gap-2">
               <Input
@@ -98,7 +93,6 @@ export const GameControls = ({
             </div>
           )}
 
-          {/* Botão de Jogar (Campanha) */}
           {gameMode === "campaign" && nodesLength === 0 && (
             <Button onClick={() => onStartGame()} className="w-full gap-2">
               <Play className="w-4 h-4" /> Começar Fase
@@ -116,7 +110,6 @@ export const GameControls = ({
             </Button>
           </div>
 
-          {/* BOTÃO PRÓXIMO NÍVEL */}
           {levelCompleted && (
             <Button
               onClick={onNextLevel}

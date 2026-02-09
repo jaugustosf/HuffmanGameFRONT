@@ -4,8 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export const GameInfo = ({ gameMode, successCount, errorCount }) => {
   return (
-    // REMOVI "absolute top-4 right-4 z-10 max-w-xs"
-    // Agora ele ocupa 100% da largura do container pai e empilha os itens
     <div className="flex flex-col gap-3 w-full">
       <Card className="shadow-md bg-white/90 backdrop-blur dark:bg-neutral-800/90 dark:border-neutral-700">
         <CardContent className="px-4 py-3 text-sm pt-0 pb-0 text-neutral-600 dark:text-neutral-300 space-y-2">

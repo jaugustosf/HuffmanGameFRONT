@@ -13,25 +13,19 @@ import { GameOverModal } from "@/components/game/GameOverModal";
 import { HuffmanTable } from "@/components/game/HuffmanTable";
 
 const HuffmanBoard = () => {
-  // TRUQUE 1: Pegar o resolvedTheme para saber a cor real
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Hook principal de lógica
   const game = useHuffmanGame();
 
   useEffect(() => {
-    // TRUQUE 2: Silenciar o aviso de setState no effect
-    // eslint-disable-next-line
     setMounted(true);
   }, []);
 
-  // Se não montou, não renderiza nada para evitar flash
   if (!mounted) return null;
 
   return (
     <div className="w-full h-[90vh] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm relative bg-neutral-50 dark:bg-[#1B1B1B] overflow-hidden">
-      {/* 1. CONTROLES (ESQUERDA) */}
       <GameControls
         gameMode={game.gameMode}
         levelName={LEVEL_ORDER[game.currentLevelDiff]}
@@ -40,7 +34,6 @@ const HuffmanBoard = () => {
         currentWordIndex={game.currentWordIndex}
         totalWordsInLevel={LEVELS[LEVEL_ORDER[game.currentLevelDiff]].length}
         mounted={mounted}
-        // Passamos o tema RESOLVIDO para o controle exibir o ícone certo
         theme={resolvedTheme}
         setTheme={setTheme}
         nodesLength={game.nodes.length}
@@ -53,16 +46,13 @@ const HuffmanBoard = () => {
         onNextLevel={game.handleNextLevel}
       />
 
-      {/* 2. INFO + TABELA (DIREITA) - AGRUPADOS */}
       <div className="absolute top-4 right-4 z-10 w-80 flex flex-col gap-3 max-h-[90vh] overflow-y-auto pr-1 pb-4 scrollbar-hide">
-        {/* O Placar fica sempre visível */}
         <GameInfo
           gameMode={game.gameMode}
           successCount={game.successCount}
           errorCount={game.errorCount}
         />
 
-        {/* ALTERAÇÃO AQUI: A Tabela só aparece se o nível estiver completo */}
         <div
           className={`transition-all duration-500 ease-in-out ${game.levelCompleted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none absolute"}`}
         >
@@ -72,9 +62,7 @@ const HuffmanBoard = () => {
         </div>
       </div>
 
-      {/* 3. TABULEIRO (REACT FLOW) */}
       <ReactFlow
-        // TRUQUE 3: Key força redesenho ao trocar tema
         key={resolvedTheme}
         nodes={game.nodes}
         edges={game.edges}
@@ -86,7 +74,6 @@ const HuffmanBoard = () => {
         onNodeDragStart={game.onNodeDragStart}
         onNodeDragStop={game.onNodeDragStop}
         fitView
-        // Define o modo explicitamente
         colorMode={resolvedTheme === "dark" ? "dark" : "light"}
         style={{
           color: resolvedTheme === "dark" ? "#fff" : "#000",
@@ -94,16 +81,13 @@ const HuffmanBoard = () => {
       >
         <Background
           gap={20}
-          // Ajustei para o cinza escuro no dark e preto no light para contraste
           color={resolvedTheme === "dark" ? "#555555" : "#000000"}
           variant="dots"
         />
 
-        {/* TRUQUE 4: Estilização manual dos controles via Tailwind */}
         <Controls className="bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 [&>button]:text-black dark:[&>button]:text-white [&>button]:fill-black dark:[&>button]:fill-white [&>button:hover]:bg-neutral-100 dark:[&>button:hover]:bg-neutral-700 [&>button]:border-b-neutral-200 dark:[&>button]:border-b-neutral-700" />
       </ReactFlow>
 
-      {/* 4. MODAIS */}
       <TutorialModal
         open={game.showTutorial}
         onOpenChange={game.setShowTutorial}
