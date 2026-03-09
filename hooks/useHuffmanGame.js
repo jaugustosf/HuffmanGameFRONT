@@ -44,7 +44,33 @@ export const useHuffmanGame = () => {
   const [successCount, setSuccessCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
 
+  // === SISTEMA DE PONTOS (COMBOS) ===
+  const [score, setScore] = useState(0);
+  const [successStreak, setSuccessStreak] = useState(0);
+  const [errorStreak, setErrorStreak] = useState(0);
+
   const beforeDragSnapshot = useRef(null);
+
+  const [playerName, setPlayerName] = useState("");
+  const [showNameModal, setShowNameModal] = useState(false);
+
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+
+  // Verifica se o usuário já tem um nome salvo
+  useEffect(() => {
+    const savedName = localStorage.getItem("@HuffmanGame:playerName");
+    if (savedName) {
+      setPlayerName(savedName);
+    } else {
+      setTimeout(() => setShowNameModal(true), 1500);
+    }
+  }, []);
+
+  const handleSaveName = useCallback((name) => {
+    setPlayerName(name);
+    localStorage.setItem("@HuffmanGame:playerName", name);
+    setShowNameModal(false);
+  }, []);
 
   useEffect(() => {
     if (gameMode === "campaign" && !word) {
@@ -64,6 +90,10 @@ export const useHuffmanGame = () => {
     setHistory([]);
     setLevelCompleted(false);
     setIsValidating(false);
+
+    // Zera apenas os combos na nova fase. O SCORE continua acumulando!
+    setSuccessStreak(0);
+    setErrorStreak(0);
 
     try {
       const response = await axios.post(
@@ -118,11 +148,13 @@ export const useHuffmanGame = () => {
     setIsValidating(false);
 
     if (currentWordIndex + 1 < currentList.length) {
+      // Tem mais palavras neste nível
       const nextWord = currentList[currentWordIndex + 1];
       setCurrentWordIndex((prev) => prev + 1);
       setWord(nextWord);
       setTimeout(() => handleStartGame(nextWord), 100);
     } else {
+      // Acabou as palavras deste nível, tenta ir pro próximo nível
       if (currentLevelDiff + 1 < LEVEL_ORDER.length) {
         const nextDiffIndex = currentLevelDiff + 1;
         const nextDiffKey = LEVEL_ORDER[nextDiffIndex];
@@ -133,8 +165,25 @@ export const useHuffmanGame = () => {
         toast.info(`Nível ${nextDiffKey} Desbloqueado!`);
         setTimeout(() => handleStartGame(nextWord), 100);
       } else {
+        // === FIM DA CAMPANHA (TODOS OS DESAFIOS FINALIZADOS) ===
         setShowEndCampaignModal(true);
         confetti({ particleCount: 500, spread: 180 });
+
+        // === SALVA NO BANCO DE DADOS DA VERCEL ===
+        if (playerName && score > 0) {
+          fetch("/api/ranking", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ playerName: playerName, score: score }),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              console.log("Salvo no banco!", data);
+              // Espera 1.5s pra pessoa ver os confetes antes de abrir o placar
+              setTimeout(() => setShowLeaderboard(true), 1500);
+            })
+            .catch((err) => console.error("Erro ao salvar no ranking:", err));
+        }
       }
     }
   };
@@ -145,6 +194,12 @@ export const useHuffmanGame = () => {
     setWord("");
     setNodes([]);
     setEdges([]);
+
+    // Zera os pontos para o modo livre
+    setScore(0);
+    setSuccessStreak(0);
+    setErrorStreak(0);
+
     toast.success("Modo Livre Liberado! Divirta-se.");
   };
 
@@ -155,6 +210,12 @@ export const useHuffmanGame = () => {
     setCurrentWordIndex(0);
     setSuccessCount(0);
     setErrorCount(0);
+
+    // Zera os pontos para a nova campanha
+    setScore(0);
+    setSuccessStreak(0);
+    setErrorStreak(0);
+
     const firstWord = LEVELS.EASY[0];
     setWord(firstWord);
     setTimeout(() => handleStartGame(firstWord), 100);
@@ -172,16 +233,29 @@ export const useHuffmanGame = () => {
 
     setIsValidating(true);
 
-    const timer = setTimeout(() => {
-      toast.success("Árvore Completa!", { description: "Nível finalizado." });
+    // Bônus equalizado para 35
+    const levelBonus = 35;
 
-      setLevelCompleted(true);
-      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+    // Atualiza o score com o bônus antes de mostrar a notificação
+    setScore((curr) => {
+      const finalScore = curr + levelBonus;
 
-      setIsValidating(false);
-    }, 100);
+      const timer = setTimeout(() => {
+        toast.success("Árvore Completa!", {
+          description: `Fase concluída! +1250 Bônus. Score: ${finalScore}`,
+        });
 
-    return () => clearTimeout(timer);
+        setLevelCompleted(true);
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+
+        setIsValidating(false);
+      }, 100);
+
+      return finalScore;
+    });
+
+    // Como o timer agora está dentro do setScore, não precisamos retornar o clearTimeout aqui da mesma forma,
+    // mas por segurança e para evitar warnings do React, mantemos a estrutura de dependências limpa.
   }, [nodes, levelCompleted, isValidating]);
 
   useEffect(() => {
@@ -209,6 +283,11 @@ export const useHuffmanGame = () => {
     setSuccessCount(lastSnapshot.score?.success || 0);
     setErrorCount(lastSnapshot.score?.error || 0);
 
+    // Restaura o score exato de antes
+    setScore(lastSnapshot.score?.points || 0);
+    setSuccessStreak(lastSnapshot.score?.successStreak || 0);
+    setErrorStreak(lastSnapshot.score?.errorStreak || 0);
+
     setHistory((prev) => prev.slice(0, prev.length - 1));
     setLevelCompleted(false);
     setIsValidating(false);
@@ -235,9 +314,23 @@ export const useHuffmanGame = () => {
         data: { ...n.data },
       })),
       edges: edges.map((e) => ({ ...e })),
-      score: { success: successCount, error: errorCount },
+      score: {
+        success: successCount,
+        error: errorCount,
+        points: score,
+        successStreak,
+        errorStreak,
+      },
     };
-  }, [nodes, edges, successCount, errorCount]);
+  }, [
+    nodes,
+    edges,
+    successCount,
+    errorCount,
+    score,
+    successStreak,
+    errorStreak,
+  ]);
 
   const onNodeDragStop = useCallback(() => {
     if (!beforeDragSnapshot.current) return;
@@ -276,7 +369,13 @@ export const useHuffmanGame = () => {
           data: { ...n.data },
         })),
         edges: edges.map((e) => ({ ...e })),
-        score: { success: successCount, error: errorCount },
+        score: {
+          success: successCount,
+          error: errorCount,
+          points: score,
+          successStreak,
+          errorStreak,
+        },
       },
     ]);
 
@@ -310,6 +409,9 @@ export const useHuffmanGame = () => {
     setEdges,
     successCount,
     errorCount,
+    score,
+    successStreak,
+    errorStreak,
     nodes,
     edges,
   ]);
@@ -326,16 +428,6 @@ export const useHuffmanGame = () => {
         return;
       }
 
-      if (!isValidHuffmanMove(sourceNode, targetNode, nodes)) {
-        toast.error("Movimento Inválido!", {
-          description: "Una sempre os menores valores.",
-        });
-        setErrorCount((prev) => prev + 1);
-        return;
-      } else {
-        setSuccessCount((prev) => prev + 1);
-      }
-
       setHistory((prev) => [
         ...prev,
         {
@@ -345,9 +437,45 @@ export const useHuffmanGame = () => {
             data: { ...n.data },
           })),
           edges: edges.map((e) => ({ ...e })),
-          score: { success: successCount, error: errorCount },
+          score: {
+            success: successCount,
+            error: errorCount,
+            points: score,
+            successStreak,
+            errorStreak,
+          },
         },
       ]);
+
+      // === VALIDAÇÃO DE PONTOS (ARCADE MODE CORRIGIDO) ===
+      if (!isValidHuffmanMove(sourceNode, targetNode, nodes)) {
+        toast.error("Movimento Inválido!", {
+          description: "Una sempre os menores valores.",
+        });
+        setErrorCount((prev) => prev + 1);
+
+        // 1. Calcula os valores usando as variáveis diretas
+        const newErrStreak = errorStreak + 1;
+        const penalty = Math.round(75 * Math.pow(1.2, newErrStreak - 1));
+
+        // 2. Atualiza os estados separadamente (sem efeitos colaterais)
+        setSuccessStreak(0);
+        setErrorStreak(newErrStreak);
+        setScore((curr) => Math.max(0, curr - penalty));
+
+        return;
+      } else {
+        setSuccessCount((prev) => prev + 1);
+
+        // 1. Calcula os valores usando as variáveis diretas
+        const newSuccStreak = successStreak + 1;
+        const reward = Math.round(125 * Math.pow(1.5, newSuccStreak - 1));
+
+        // 2. Atualiza os estados separadamente (sem efeitos colaterais)
+        setErrorStreak(0);
+        setSuccessStreak(newSuccStreak);
+        setScore((curr) => curr + reward);
+      }
 
       const MIN_DISTANCE = 250;
       const IDEAL_GAP = 120;
@@ -475,6 +603,9 @@ export const useHuffmanGame = () => {
       edges,
       successCount,
       errorCount,
+      score,
+      successStreak,
+      errorStreak,
       isValidHuffmanMove,
       setNodes,
       setEdges,
@@ -517,6 +648,12 @@ export const useHuffmanGame = () => {
     setShowTutorial,
     successCount,
     errorCount,
+
+    // Exportados de Pontuação
+    score,
+    successStreak,
+    errorStreak,
+
     nodeToDelete,
     setNodeToDelete,
 
@@ -534,5 +671,12 @@ export const useHuffmanGame = () => {
     onNodeContextMenu,
     onEdgeContextMenu,
     confirmDelete,
+
+    playerName,
+    showNameModal,
+    handleSaveName,
+
+    showLeaderboard,
+    setShowLeaderboard,
   };
 };
