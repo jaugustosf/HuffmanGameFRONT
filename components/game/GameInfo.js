@@ -1,49 +1,76 @@
 import React from "react";
-import { Info, CheckCircle2, XCircle, Trophy, Lock } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  CheckCircle2,
+  XCircle,
+  Lock,
+  Unlock,
+  Trophy,
+  Info,
+} from "lucide-react";
 
-export const GameInfo = ({ gameMode, successCount, errorCount }) => {
+export const GameInfo = ({ gameMode, successCount, errorCount, score = 0 }) => {
   return (
-    <div className="flex flex-col gap-3 w-full">
-      <Card className="shadow-md bg-white/90 backdrop-blur dark:bg-neutral-800/90 dark:border-neutral-700">
-        <CardContent className="px-4 py-3 text-sm pt-0 pb-0 text-neutral-600 dark:text-neutral-300 space-y-2">
-          <p className="font-semibold flex items-center gap-2 text-neutral-800 dark:text-neutral-100">
-            <Info className="w-4 h-4" /> Regras:
-          </p>
-          <ul className="list-disc pl-4 space-y-1">
-            <li>Conecte os 2 menores valores.</li>
-            <li>
-              O <strong>Modo Livre</strong> desbloqueia no final.
-            </li>
-          </ul>
-          {gameMode === "free" && (
-            <div className="mt-2 pt-2 border-t border-neutral-200 dark:border-neutral-700 text-xs text-purple-500 font-bold flex items-center gap-1">
-              <Trophy className="w-3 h-3" /> Modo Mestre Ativo
-            </div>
-          )}
-          {gameMode === "campaign" && (
-            <div className="mt-2 pt-2 border-t border-neutral-200 dark:border-neutral-700 text-xs text-neutral-400 flex items-center gap-1">
-              <Lock className="w-3 h-3" /> Input Bloqueado
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <div className="flex flex-col gap-3">
+      {/* 1. REGRAS BÁSICAS */}
+      <div className="bg-white dark:bg-[#1B1B1B] border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <Info className="w-5 h-5 text-neutral-500" />
+          <h3 className="font-bold text-neutral-800 dark:text-neutral-200">
+            Regras:
+          </h3>
+        </div>
+        <ul className="text-sm text-neutral-600 dark:text-neutral-400 space-y-2 mb-4 list-disc pl-5">
+          <li>Conecte os 2 menores valores.</li>
+          <li>
+            O{" "}
+            <strong className="text-neutral-800 dark:text-neutral-200">
+              Modo Livre
+            </strong>{" "}
+            desbloqueia no final.
+          </li>
+        </ul>
 
-      <div className="flex gap-2 w-full">
-        <div className="flex-1 bg-white/90 dark:bg-neutral-800/90 backdrop-blur border-l-4 border-green-500 rounded-r-md shadow-sm p-2 flex items-center justify-between">
-          <span className="text-xs font-bold text-neutral-500 uppercase tracking-wide">
-            Acertos
+        <div className="pt-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center gap-2 text-xs text-neutral-500">
+          {gameMode === "free" ? (
+            <>
+              <Unlock className="w-3.5 h-3.5" /> Input Liberado
+            </>
+          ) : (
+            <>
+              <Lock className="w-3.5 h-3.5" /> Input Bloqueado
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* 2. NOVO: PLACAR DE PONTOS (SCORE) */}
+      <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl p-4 shadow-md text-white flex items-center justify-between transform transition-all hover:scale-[1.02]">
+        <div className="flex items-center gap-2">
+          <Trophy className="w-6 h-6 text-amber-100" />
+          <span className="font-black tracking-wider opacity-90">SCORE</span>
+        </div>
+        <span className="text-3xl font-black drop-shadow-md">{score}</span>
+      </div>
+
+      {/* 3. ACERTOS E ERROS */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white dark:bg-[#1B1B1B] border-l-4 border-l-green-500 border border-neutral-200 dark:border-neutral-800 rounded-lg p-3 flex items-center justify-between shadow-sm">
+          <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+            ACERTOS
           </span>
-          <div className="flex items-center text-green-600 dark:text-green-400 font-bold text-lg">
-            <CheckCircle2 className="w-4 h-4 mr-1" /> {successCount}
+          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-500">
+            <CheckCircle2 className="w-4.5 h-4.5" />
+            <span className="text-xl font-black">{successCount}</span>
           </div>
         </div>
-        <div className="flex-1 bg-white/90 dark:bg-neutral-800/90 backdrop-blur border-l-4 border-red-500 rounded-r-md shadow-sm p-2 flex items-center justify-between">
-          <span className="text-xs font-bold text-neutral-500 uppercase tracking-wide">
-            Erros
+
+        <div className="bg-white dark:bg-[#1B1B1B] border-l-4 border-l-red-500 border border-neutral-200 dark:border-neutral-800 rounded-lg p-3 flex items-center justify-between shadow-sm">
+          <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+            ERROS
           </span>
-          <div className="flex items-center text-red-600 dark:text-red-400 font-bold text-lg">
-            <XCircle className="w-4 h-4 mr-1" /> {errorCount}
+          <div className="flex items-center gap-1.5 text-red-600 dark:text-red-500">
+            <XCircle className="w-4.5 h-4.5" />
+            <span className="text-xl font-black">{errorCount}</span>
           </div>
         </div>
       </div>
