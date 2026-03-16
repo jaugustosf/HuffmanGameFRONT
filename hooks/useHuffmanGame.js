@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useNodesState, useEdgesState } from "@xyflow/react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -50,11 +50,13 @@ export const useHuffmanGame = () => {
   const [errorStreak, setErrorStreak] = useState(0);
 
   const beforeDragSnapshot = useRef(null);
+  const draggingDescendants = useRef([]);
 
   const [playerName, setPlayerName] = useState("");
   const [showNameModal, setShowNameModal] = useState(false);
 
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [firstSelectedNodeId, setFirstSelectedNodeId] = useState(null);
 
   // Verifica se o usuário já tem um nome salvo
   useEffect(() => {
@@ -90,6 +92,7 @@ export const useHuffmanGame = () => {
     setHistory([]);
     setLevelCompleted(false);
     setIsValidating(false);
+    setFirstSelectedNodeId(null);
 
     // Zera apenas os combos na nova fase. O SCORE continua acumulando!
     setSuccessStreak(0);
@@ -119,7 +122,7 @@ export const useHuffmanGame = () => {
             level: 0,
           },
           type: "default",
-          className: `${node.character === " " ? "bg-neutral-100 dark:bg-neutral-700" : "bg-white dark:bg-neutral-800"} dark:text-neutral-100 border-2 border-neutral-400 dark:border-neutral-600 rounded-lg shadow-sm font-bold flex justify-center items-center text-xs`,
+          className: `${node.character === " " ? "bg-neutral-100 dark:bg-neutral-700" : "bg-white dark:bg-neutral-800"} dark:text-neutral-100 border-2 border-neutral-400 dark:border-neutral-600 rounded-lg shadow-sm font-bold flex justify-center items-center text-xs transition-all`,
           style: { width: 50, height: 50 },
         };
       });
@@ -146,6 +149,7 @@ export const useHuffmanGame = () => {
     setHistory([]);
     setLevelCompleted(false);
     setIsValidating(false);
+    setFirstSelectedNodeId(null);
 
     if (currentWordIndex + 1 < currentList.length) {
       // Tem mais palavras neste nível
@@ -194,6 +198,7 @@ export const useHuffmanGame = () => {
     setWord("");
     setNodes([]);
     setEdges([]);
+    setFirstSelectedNodeId(null);
 
     // Zera os pontos para o modo livre
     setScore(0);
@@ -210,6 +215,7 @@ export const useHuffmanGame = () => {
     setCurrentWordIndex(0);
     setSuccessCount(0);
     setErrorCount(0);
+    setFirstSelectedNodeId(null);
 
     // Zera os pontos para a nova campanha
     setScore(0);
@@ -278,10 +284,12 @@ export const useHuffmanGame = () => {
     if (history.length === 0) return;
     const lastSnapshot = history[history.length - 1];
 
-    setNodes(lastSnapshot.nodes);
+    // Restaura os nós garantindo que nenhum esteja selecionado
+    setNodes(lastSnapshot.nodes.map((n) => ({ ...n, selected: false })));
     setEdges(lastSnapshot.edges);
     setSuccessCount(lastSnapshot.score?.success || 0);
     setErrorCount(lastSnapshot.score?.error || 0);
+    setFirstSelectedNodeId(null);
 
     // Restaura o score exato de antes
     setScore(lastSnapshot.score?.points || 0);
@@ -306,31 +314,80 @@ export const useHuffmanGame = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo]);
 
-  const onNodeDragStart = useCallback(() => {
-    beforeDragSnapshot.current = {
-      nodes: nodes.map((n) => ({
-        ...n,
-        position: { ...n.position },
-        data: { ...n.data },
-      })),
-      edges: edges.map((e) => ({ ...e })),
-      score: {
-        success: successCount,
-        error: errorCount,
-        points: score,
-        successStreak,
-        errorStreak,
-      },
-    };
-  }, [
-    nodes,
-    edges,
-    successCount,
-    errorCount,
-    score,
-    successStreak,
-    errorStreak,
-  ]);
+  const onNodeDragStart = useCallback(
+    (event, node) => {
+      beforeDragSnapshot.current = {
+        nodes: nodes.map((n) => ({
+          ...n,
+          position: { ...n.position },
+          data: { ...n.data },
+        })),
+        edges: edges.map((e) => ({ ...e })),
+        score: {
+          success: successCount,
+          error: errorCount,
+          points: score,
+          successStreak,
+          errorStreak,
+        },
+      };
+
+      // === LÓGICA DE SEGUIR PAI ===
+      const descendants = [];
+      const stack = [node.id];
+      while (stack.length > 0) {
+        const pId = stack.pop();
+        const childrenIds = edges
+          .filter((e) => e.source === pId)
+          .map((e) => e.target);
+        descendants.push(...childrenIds);
+        stack.push(...childrenIds);
+      }
+
+      draggingDescendants.current = descendants.map((id) => {
+        const n = nodes.find((nds) => nds.id === id);
+        return {
+          id,
+          offsetX: n.position.x - node.position.x,
+          offsetY: n.position.y - node.position.y,
+        };
+      });
+    },
+    [
+      nodes,
+      edges,
+      successCount,
+      errorCount,
+      score,
+      successStreak,
+      errorStreak,
+    ],
+  );
+
+  const onNodeDrag = useCallback(
+    (event, node) => {
+      if (draggingDescendants.current.length === 0) return;
+
+      setNodes((nds) =>
+        nds.map((n) => {
+          const descendant = draggingDescendants.current.find(
+            (d) => d.id === n.id,
+          );
+          if (descendant) {
+            return {
+              ...n,
+              position: {
+                x: node.position.x + descendant.offsetX,
+                y: node.position.y + descendant.offsetY,
+              },
+            };
+          }
+          return n;
+        }),
+      );
+    },
+    [setNodes],
+  );
 
   const onNodeDragStop = useCallback(() => {
     if (!beforeDragSnapshot.current) return;
@@ -339,6 +396,7 @@ export const useHuffmanGame = () => {
       setHistory((prev) => [...prev, snapshotToSave]);
     }
     beforeDragSnapshot.current = null;
+    draggingDescendants.current = [];
   }, [nodes]);
 
   const isValidHuffmanMove = (nodeA, nodeB, allNodes) => {
@@ -416,9 +474,8 @@ export const useHuffmanGame = () => {
     edges,
   ]);
 
-  const onConnect = useCallback(
-    (params) => {
-      const { source, target } = params;
+  const executeUnion = useCallback(
+    (source, target) => {
       const sourceNode = nodes.find((n) => n.id === source);
       const targetNode = nodes.find((n) => n.id === target);
 
@@ -454,11 +511,9 @@ export const useHuffmanGame = () => {
         });
         setErrorCount((prev) => prev + 1);
 
-        // 1. Calcula os valores usando as variáveis diretas
         const newErrStreak = errorStreak + 1;
         const penalty = Math.round(75 * Math.pow(1.2, newErrStreak - 1));
 
-        // 2. Atualiza os estados separadamente (sem efeitos colaterais)
         setSuccessStreak(0);
         setErrorStreak(newErrStreak);
         setScore((curr) => Math.max(0, curr - penalty));
@@ -467,11 +522,9 @@ export const useHuffmanGame = () => {
       } else {
         setSuccessCount((prev) => prev + 1);
 
-        // 1. Calcula os valores usando as variáveis diretas
         const newSuccStreak = successStreak + 1;
         const reward = Math.round(125 * Math.pow(1.5, newSuccStreak - 1));
 
-        // 2. Atualiza os estados separadamente (sem efeitos colaterais)
         setErrorStreak(0);
         setSuccessStreak(newSuccStreak);
         setScore((curr) => curr + reward);
@@ -612,6 +665,50 @@ export const useHuffmanGame = () => {
     ],
   );
 
+  const onConnect = useCallback(
+    (params) => {
+      executeUnion(params.source, params.target);
+    },
+    [executeUnion],
+  );
+
+  const onPaneClick = useCallback(() => {
+    if (firstSelectedNodeId) {
+      setFirstSelectedNodeId(null);
+      setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+    }
+  }, [firstSelectedNodeId, setNodes]);
+
+  const onNodeClick = useCallback(
+    (event, node) => {
+      if (node.data.isUsed) return;
+
+      // Se clicar no nó que já é o primeiro selecionado, desseleciona
+      if (firstSelectedNodeId === node.id) {
+        setFirstSelectedNodeId(null);
+        setNodes((nds) =>
+          nds.map((n) => (n.id === node.id ? { ...n, selected: false } : n)),
+        );
+        return;
+      }
+
+      if (!firstSelectedNodeId) {
+        // Primeiro clique: seleciona
+        setFirstSelectedNodeId(node.id);
+        setNodes((nds) =>
+          nds.map((n) => (n.id === node.id ? { ...n, selected: true } : n)),
+        );
+      } else {
+        // Segundo clique em nó diferente: realiza a união
+        executeUnion(firstSelectedNodeId, node.id);
+        setFirstSelectedNodeId(null);
+        // Limpar seleção de todos após tentativa
+        setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+      }
+    },
+    [firstSelectedNodeId, executeUnion, setNodes],
+  );
+
   const onNodeContextMenu = useCallback(
     (event, node) => {
       event.preventDefault();
@@ -666,7 +763,10 @@ export const useHuffmanGame = () => {
     finishCampaignGoToFree,
     undo,
     onConnect,
+    onNodeClick,
+    onPaneClick,
     onNodeDragStart,
+    onNodeDrag,
     onNodeDragStop,
     onNodeContextMenu,
     onEdgeContextMenu,

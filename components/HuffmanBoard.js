@@ -89,16 +89,33 @@ const HuffmanBoard = () => {
           onNodesChange={game.onNodesChange}
           onEdgesChange={game.onEdgesChange}
           onConnect={game.onConnect}
+          onNodeClick={game.onNodeClick}
+          onPaneClick={game.onPaneClick}
           onEdgeContextMenu={game.onEdgeContextMenu}
           onNodeContextMenu={game.onNodeContextMenu}
           onNodeDragStart={game.onNodeDragStart}
+          onNodeDrag={game.onNodeDrag}
           onNodeDragStop={game.onNodeDragStop}
           fitView
           colorMode={resolvedTheme === "dark" ? "dark" : "light"}
+          selectNodesOnDrag={false}
+          selectionOnDrag={false}
+          elementsSelectable={true}
           style={{
             color: resolvedTheme === "dark" ? "#fff" : "#000",
+            userSelect: "none",
           }}
         >
+          {/* Estilo para a animação de nó selecionado "abaixar" */}
+          <style>{`
+            .react-flow__node {
+              transition: margin-top 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
+            }
+            .react-flow__node.selected {
+              margin-top: 10px !important;
+              box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+            }
+          `}</style>
           <Background
             gap={20}
             color={resolvedTheme === "dark" ? "#555555" : "#000000"}
