@@ -1,25 +1,29 @@
-import React, { useEffect, useState } from "react";
-import { ReactFlow, Background, Controls } from "@xyflow/react";
+import React, { useState, useEffect } from "react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  useNodesState,
+  useEdgesState,
+} from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useTheme } from "next-themes";
-
-import { LEVEL_ORDER, LEVELS } from "@/data/gameLevels";
-import { useHuffmanGame } from "@/hooks/useHuffmanGame";
-import { GameControls } from "@/components/game/GameControls";
-import { GameInfo } from "@/components/game/GameInfo";
-import { TutorialModal } from "@/components/game/TutorialModal";
-import { DeleteModal } from "@/components/game/DeleteModal";
-import { GameOverModal } from "@/components/game/GameOverModal";
-import { HuffmanTable } from "@/components/game/HuffmanTable";
-import { PlayerNameModal } from "@/components/game/Modals/PlayerNameModal";
 import { Trophy } from "lucide-react";
-import { LeaderboardModal } from "@/components/game/Modals/LeaderboardModal";
+import { useTheme } from "next-themes";
+import { useHuffmanGame } from "@/hooks/useHuffmanGame";
+import { GameControls } from "./game/GameControls";
+import { GameInfo } from "./game/GameInfo";
+import { HuffmanTable } from "./game/HuffmanTable";
+import { GameOverModal } from "./game/GameOverModal";
+import { TutorialModal } from "./game/TutorialModal";
+import { DeleteModal } from "./game/DeleteModal";
+import { PlayerNameModal } from "./game/Modals/PlayerNameModal";
+import { LeaderboardModal } from "./game/Modals/LeaderboardModal";
+import { LEVELS, LEVEL_ORDER } from "@/data/gameLevels";
 
 const HuffmanBoard = () => {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
   const game = useHuffmanGame();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -30,14 +34,14 @@ const HuffmanBoard = () => {
   return (
     <div className="w-full h-full flex flex-col gap-4">
       {/* === CABEÇALHO (Título centralizado + Botão na direita) === */}
-      <div className="relative w-full flex items-center justify-center shrink-0">
+      <div className="relative w-full flex items-center justify-center shrink-0 py-1">
         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 m-0">
           Jogo de Huffman
         </h1>
 
         <button
           onClick={() => game.setShowLeaderboard(true)}
-          className="absolute right-0 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+          className="absolute right-0 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-1"
         >
           <Trophy className="w-4 h-4" /> Ranking
         </button>
@@ -65,7 +69,7 @@ const HuffmanBoard = () => {
           onNextLevel={game.handleNextLevel}
         />
 
-        <div className="absolute top-4 right-4 z-10 w-80 flex flex-col gap-3 max-h-[90vh] overflow-y-auto pr-1 pb-4 scrollbar-hide">
+        <div className="absolute top-4 right-4 z-10 w-80 flex flex-col gap-3 max-h-[90vh] overflow-y-auto p-2 pb-4 scrollbar-hide">
           <GameInfo
             gameMode={game.gameMode}
             successCount={game.successCount}
@@ -97,6 +101,7 @@ const HuffmanBoard = () => {
           onNodeDrag={game.onNodeDrag}
           onNodeDragStop={game.onNodeDragStop}
           fitView
+          nodesConnectable={false}
           colorMode={resolvedTheme === "dark" ? "dark" : "light"}
           selectNodesOnDrag={false}
           selectionOnDrag={false}
@@ -106,7 +111,7 @@ const HuffmanBoard = () => {
             userSelect: "none",
           }}
         >
-          {/* Estilo para a animação de nó selecionado "abaixar" */}
+          {/* Estilo para a animação de nó selecionado "abaixar" e esconder handles */}
           <style>{`
             .react-flow__node {
               transition: margin-top 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
@@ -114,6 +119,16 @@ const HuffmanBoard = () => {
             .react-flow__node.selected {
               margin-top: 10px !important;
               box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+            }
+            .react-flow__handle {
+              width: 1px !important;
+              height: 1px !important;
+              background: transparent !important;
+              border: none !important;
+              min-width: 0 !important;
+              min-height: 0 !important;
+              opacity: 0 !important;
+              pointer-events: none !important;
             }
           `}</style>
           <Background

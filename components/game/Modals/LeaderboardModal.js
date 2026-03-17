@@ -28,7 +28,7 @@ export const LeaderboardModal = ({ open, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
         {/* CABEÇALHO */}
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-4 flex items-center justify-between shrink-0">
+        <div className="bg-green-600 p-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-white">
             <Trophy className="w-6 h-6" />
             <h2 className="text-xl font-black uppercase tracking-wider">
@@ -47,7 +47,7 @@ export const LeaderboardModal = ({ open, onClose }) => {
         <div className="p-4 overflow-y-auto custom-scrollbar">
           {loading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
             </div>
           ) : ranking.length === 0 ? (
             <div className="text-center py-8 text-neutral-500">
@@ -77,7 +77,7 @@ export const LeaderboardModal = ({ open, onClose }) => {
                       {player.name}
                     </span>
                   </div>
-                  <div className="font-black text-amber-600 dark:text-amber-500">
+                  <div className="font-black text-green-600 dark:text-green-500">
                     {player.score} pts
                   </div>
                 </div>
