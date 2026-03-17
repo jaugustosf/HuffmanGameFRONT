@@ -18,7 +18,12 @@ import { TutorialModal } from "./game/TutorialModal";
 import { DeleteModal } from "./game/DeleteModal";
 import { PlayerNameModal } from "./game/Modals/PlayerNameModal";
 import { LeaderboardModal } from "./game/Modals/LeaderboardModal";
+import HuffmanNode from "./game/HuffmanNode";
 import { LEVELS, LEVEL_ORDER } from "@/data/gameLevels";
+
+const nodeTypes = {
+  huffman: HuffmanNode,
+};
 
 const HuffmanBoard = () => {
   const game = useHuffmanGame();
@@ -101,6 +106,7 @@ const HuffmanBoard = () => {
           onNodeDrag={game.onNodeDrag}
           onNodeDragStop={game.onNodeDragStop}
           fitView
+          nodeTypes={nodeTypes}
           nodesConnectable={false}
           colorMode={resolvedTheme === "dark" ? "dark" : "light"}
           selectNodesOnDrag={false}
@@ -111,26 +117,6 @@ const HuffmanBoard = () => {
             userSelect: "none",
           }}
         >
-          {/* Estilo para a animação de nó selecionado "abaixar" e esconder handles */}
-          <style>{`
-            .react-flow__node {
-              transition: margin-top 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
-            }
-            .react-flow__node.selected {
-              margin-top: 10px !important;
-              box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
-            }
-            .react-flow__handle {
-              width: 1px !important;
-              height: 1px !important;
-              background: transparent !important;
-              border: none !important;
-              min-width: 0 !important;
-              min-height: 0 !important;
-              opacity: 0 !important;
-              pointer-events: none !important;
-            }
-          `}</style>
           <Background
             gap={20}
             color={resolvedTheme === "dark" ? "#555555" : "#000000"}
