@@ -1,33 +1,30 @@
 import { createClient } from "redis";
 import { NextResponse } from "next/server";
 
-// Puxa a URL que você confirmou que começa com "redis://"
 const REDIS_URL = process.env.REDIS_URL;
 
 export async function GET() {
   const client = createClient({ url: REDIS_URL });
-
+  
   try {
     await client.connect();
-
+    
     // Busca os 10 melhores
     const rankingRaw = await client.zRangeWithScores("huffman_ranking", 0, 9, {
       REV: true,
     });
-
-    // Ajuste aqui: a biblioteca 'redis' retorna { value, score }
-    // Vamos transformar em { name, score } para o seu Front-end entender
+    
     const formattedRanking = rankingRaw.map((item) => ({
-      name: item.value, // O Redis chama o nome de 'value'
+      name: item.value,
       score: item.score,
     }));
 
     return NextResponse.json({ ranking: formattedRanking });
   } catch (error) {
-    console.error("Erro no Redis GET:", error);
+    console.error("ERRO NO REDIS GET:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   } finally {
-    await client.quit();
+    if (client.isOpen) await client.quit();
   }
 }
 
@@ -37,18 +34,20 @@ export async function POST(request) {
   try {
     const { playerName, score } = await request.json();
 
+    if (!playerName || score === undefined) {
+      return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+    }
+
     await client.connect();
-    // ZADD adiciona o score ao ranking
-    await client.zAdd("huffman_ranking", {
-      score: score,
-      value: playerName,
-    });
+    
+    // zIncrBy soma o score enviado ao score que já existe no Redis para esse jogador
+    await client.zIncrBy("huffman_ranking", score, playerName);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erro no Redis POST:", error);
+    console.error("ERRO NO REDIS POST:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   } finally {
-    await client.quit();
+    if (client.isOpen) await client.quit();
   }
 }
