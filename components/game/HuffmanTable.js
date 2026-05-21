@@ -13,7 +13,6 @@ export const HuffmanTable = ({ nodes, edges }) => {
       let currentId = leaf.id;
       let code = "";
 
-      // Percorre de baixo para cima
       while (true) {
         const parentEdge = edges.find((e) => e.target === currentId);
         if (!parentEdge) break;
@@ -26,14 +25,12 @@ export const HuffmanTable = ({ nodes, edges }) => {
 
       totalFrequency += freq;
 
-      // Se não tem código (nó solto), assume 8 bits para penalizar a falta de compressão na métrica
       const currentBits = code.length > 0 ? freq * code.length : freq * 8;
       huffmanBits += currentBits;
 
       data.push({ char, freq, code: code || "-", bits: code.length || 8 });
     });
 
-    // Ordenação: menor código primeiro -> maior frequência -> alfabética
     data.sort(
       (a, b) =>
         a.code.length - b.code.length ||
@@ -96,7 +93,6 @@ export const HuffmanTable = ({ nodes, edges }) => {
           </div>
         </div>
 
-        {/* ESTATÍSTICAS DE ECONOMIA (NOVO LAYOUT) */}
         <div className="grid grid-cols-2 gap-2 text-[10px] text-neutral-500 dark:text-neutral-400">
           <div className="flex flex-col items-center p-2 bg-neutral-50 dark:bg-neutral-900 rounded-md border border-neutral-100 dark:border-neutral-800">
             <span>ASCII (8 bits)</span>
@@ -112,7 +108,6 @@ export const HuffmanTable = ({ nodes, edges }) => {
           </div>
         </div>
 
-        {/* BLOCO DE DESTAQUE DA ECONOMIA */}
         <div className="relative p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md flex items-center justify-between overflow-hidden">
           <div className="flex flex-col z-10">
             <span className="flex items-center gap-1 font-bold text-green-800 dark:text-green-400 uppercase tracking-wider text-[10px]">

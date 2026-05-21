@@ -42,7 +42,7 @@ export const GameControls = ({
               <div className="flex flex-col items-start gap-2">
                 <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-neutral-400">
                   Nível:{" "}
-                  <strong className="ml-1 uppercase text-blue-600 dark:text-blue-400">
+                  <strong className="ml-1 uppercase text-green-600 dark:text-green-500">
                     {levelName}
                   </strong>
                 </span>

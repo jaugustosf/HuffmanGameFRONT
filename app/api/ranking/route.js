@@ -47,6 +47,10 @@ export async function POST(request) {
     const supabase = getSupabase();
     const { playerName, score } = await request.json();
 
+    if (!playerName || score === undefined) {
+      return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+    }
+
     const { error } = await supabase
       .from("ranking")
       .insert([{ player_name: playerName, score: score }]);

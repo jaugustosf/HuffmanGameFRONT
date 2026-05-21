@@ -120,10 +120,9 @@ export const useHuffmanGame = () => {
             frequency: node.frequency,
             isUsed: false,
             level: 0,
+            isParent: false,
           },
-          type: "default",
-          className: `${node.character === " " ? "bg-neutral-100 dark:bg-neutral-700" : "bg-white dark:bg-neutral-800"} dark:text-neutral-100 border-2 border-neutral-400 dark:border-neutral-600 rounded-lg shadow-sm font-bold flex justify-center items-center text-xs transition-all`,
-          style: { width: 50, height: 50 },
+          type: "huffman",
         };
       });
 
@@ -450,7 +449,7 @@ export const useHuffmanGame = () => {
             return {
               ...n,
               data: { ...n.data, isUsed: false },
-              style: { ...n.style, opacity: 1, pointerEvents: "all" },
+              selectable: true,
             };
           }
           return n;
@@ -579,20 +578,9 @@ export const useHuffmanGame = () => {
           frequency: newFrequency,
           isUsed: false,
           level: newLevel,
+          isParent: true,
         },
-        type: "default",
-        style: {
-          backgroundColor: "#FFD700",
-          fontWeight: "bold",
-          border: "2px solid #b8860b",
-          width: 80,
-          height: 50,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          borderRadius: "8px",
-          color: "#000",
-        },
+        type: "huffman",
       };
 
       setNodes((nds) => {
@@ -604,14 +592,16 @@ export const useHuffmanGame = () => {
                 ...node,
                 position: { x: finalSourceX, y: topY },
                 data: { ...node.data, isUsed: true },
-                style: { ...node.style, opacity: 0.4, pointerEvents: "none" },
+                selectable: false,
+                selected: false,
               };
             if (node.id === target)
               return {
                 ...node,
                 position: { x: finalTargetX, y: topY },
                 data: { ...node.data, isUsed: true },
-                style: { ...node.style, opacity: 0.4, pointerEvents: "none" },
+                selectable: false,
+                selected: false,
               };
             return node;
           })

@@ -1,7 +1,7 @@
-export const LEVEL_ORDER = ["EASY", "NORMAL", "HARD"];
-
 export const LEVELS = {
-  EASY: ["AB"],
-  NORMAL: ["AB"],
-  HARD: ["AB"],
+  EASY: ["BINARIO", "BACKUP", "SCRIPT"],
+  NORMAL: ["ALGORITMO", "COMPILADOR", "FRAMEWORK"],
+  HARD: ["CRIPTOGRAFIA", "KUBERNETES", "POLIMORFISMO"],
 };
+
+export const LEVEL_ORDER = ["EASY", "NORMAL", "HARD"];

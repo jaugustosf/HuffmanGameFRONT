@@ -44,9 +44,9 @@ export const GameInfo = ({ gameMode, successCount, errorCount, score = 0 }) => {
       </div>
 
       {/* 2. NOVO: PLACAR DE PONTOS (SCORE) */}
-      <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl p-4 shadow-md text-white flex items-center justify-between transform transition-all hover:scale-[1.02]">
+      <div className="bg-green-600 rounded-xl p-4 shadow-md text-white flex items-center justify-between transform transition-all hover:scale-[1.02]">
         <div className="flex items-center gap-2">
-          <Trophy className="w-6 h-6 text-amber-100" />
+          <Trophy className="w-6 h-6 text-green-100" />
           <span className="font-black tracking-wider opacity-90">SCORE</span>
         </div>
         <span className="text-3xl font-black drop-shadow-md">{score}</span>
