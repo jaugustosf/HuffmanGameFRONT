@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  // Isso ajuda o Cloudflare a entender as rotas de API no Pages
+  output: undefined, 
 };
 
 export default nextConfig;
