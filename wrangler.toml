@@ -1,0 +1,7 @@
+name = "playhuffman"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# As variáveis de ambiente devem ser configuradas no painel do Cloudflare, 
+# mas o nodejs_compat agora está forçado aqui.
