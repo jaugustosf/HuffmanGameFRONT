@@ -1,54 +1,61 @@
-import { createClient } from "redis";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-// Puxa a URL que você confirmou que começa com "redis://"
-const REDIS_URL = process.env.REDIS_URL;
+let supabaseClient = null;
+
+function getSupabase() {
+  if (supabaseClient) return supabaseClient;
+
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    // Durante o build do Next.js, as variáveis podem não estar presentes.
+    // Retornamos um erro amigável apenas quando a rota for chamada de fato.
+    throw new Error("Supabase URL and Anon Key are required environment variables.");
+  }
+
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return supabaseClient;
+}
 
 export async function GET() {
-  const client = createClient({ url: REDIS_URL });
-
   try {
-    await client.connect();
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("ranking")
+      .select("player_name, score")
+      .order("score", { ascending: false })
+      .limit(10);
 
-    // Busca os 10 melhores
-    const rankingRaw = await client.zRangeWithScores("huffman_ranking", 0, 9, {
-      REV: true,
-    });
+    if (error) throw error;
 
-    // Ajuste aqui: a biblioteca 'redis' retorna { value, score }
-    // Vamos transformar em { name, score } para o seu Front-end entender
-    const formattedRanking = rankingRaw.map((item) => ({
-      name: item.value, // O Redis chama o nome de 'value'
+    const formattedRanking = data.map((item) => ({
+      name: item.player_name,
       score: item.score,
     }));
 
     return NextResponse.json({ ranking: formattedRanking });
   } catch (error) {
-    console.error("Erro no Redis GET:", error);
+    console.error("Erro no Supabase GET:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
-  } finally {
-    await client.quit();
   }
 }
 
 export async function POST(request) {
-  const client = createClient({ url: REDIS_URL });
-
   try {
+    const supabase = getSupabase();
     const { playerName, score } = await request.json();
 
-    await client.connect();
-    // ZADD adiciona o score ao ranking
-    await client.zAdd("huffman_ranking", {
-      score: score,
-      value: playerName,
-    });
+    const { error } = await supabase
+      .from("ranking")
+      .insert([{ player_name: playerName, score: score }]);
+
+    if (error) throw error;
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erro no Redis POST:", error);
+    console.error("Erro no Supabase POST:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
-  } finally {
-    await client.quit();
   }
 }

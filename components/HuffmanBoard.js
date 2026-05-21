@@ -37,7 +37,7 @@ const HuffmanBoard = () => {
 
         <button
           onClick={() => game.setShowLeaderboard(true)}
-          className="absolute right-0 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+          className="absolute right-0 flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-4 py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
         >
           <Trophy className="w-4 h-4" /> Ranking
         </button>
@@ -101,12 +101,13 @@ const HuffmanBoard = () => {
           selectNodesOnDrag={false}
           selectionOnDrag={false}
           elementsSelectable={true}
+          nodesConnectable={false}
           style={{
             color: resolvedTheme === "dark" ? "#fff" : "#000",
             userSelect: "none",
           }}
         >
-          {/* Estilo para a animação de nó selecionado "abaixar" */}
+          {/* Estilo para a animação de nó selecionado "abaixar" e ocultar handles */}
           <style>{`
             .react-flow__node {
               transition: margin-top 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
@@ -114,6 +115,10 @@ const HuffmanBoard = () => {
             .react-flow__node.selected {
               margin-top: 10px !important;
               box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+            }
+            .react-flow__handle {
+              opacity: 0 !important;
+              pointer-events: none !important;
             }
           `}</style>
           <Background

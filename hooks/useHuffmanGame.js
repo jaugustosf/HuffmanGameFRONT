@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { LEVELS, LEVEL_ORDER } from "@/data/gameLevels";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 const hasPositionChanged = (nodesA, nodesB) => {
   if (nodesA.length !== nodesB.length) return true;
