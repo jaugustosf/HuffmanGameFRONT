@@ -3,8 +3,6 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
 
-export const runtime = "edge";
-
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
