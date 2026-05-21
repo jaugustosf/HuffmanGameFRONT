@@ -10,8 +10,6 @@ function getSupabase() {
   const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    // Durante o build do Next.js, as variáveis podem não estar presentes.
-    // Retornamos um erro amigável apenas quando a rota for chamada de fato.
     throw new Error("Supabase URL and Anon Key are required environment variables.");
   }
 
@@ -51,11 +49,34 @@ export async function POST(request) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
 
-    const { error } = await supabase
+    // Busca o jogador atual para ver se ele já existe
+    const { data: existingPlayer, error: fetchError } = await supabase
       .from("ranking")
-      .insert([{ player_name: playerName, score: score }]);
+      .select("score")
+      .eq("player_name", playerName)
+      .single();
 
-    if (error) throw error;
+    if (fetchError && fetchError.code !== "PGRST116") { // PGRST116 é "não encontrado"
+      throw fetchError;
+    }
+
+    if (existingPlayer) {
+      // Se existe, soma o score novo ao que já tem
+      const newTotalScore = existingPlayer.score + score;
+      const { error: updateError } = await supabase
+        .from("ranking")
+        .update({ score: newTotalScore })
+        .eq("player_name", playerName);
+      
+      if (updateError) throw updateError;
+    } else {
+      // Se não existe, cria novo
+      const { error: insertError } = await supabase
+        .from("ranking")
+        .insert([{ player_name: playerName, score: score }]);
+      
+      if (insertError) throw insertError;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

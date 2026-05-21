@@ -139,6 +139,26 @@ export const useHuffmanGame = () => {
     }
   };
 
+  const saveScore = useCallback(
+    async (finalScore) => {
+      if (playerName && finalScore > 0) {
+        try {
+          const res = await fetch("/api/ranking", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ playerName, score: finalScore }),
+          });
+          const data = await res.json();
+          console.log("Score saved to Supabase:", data);
+          return data;
+        } catch (err) {
+          console.error("Error saving to ranking:", err);
+        }
+      }
+    },
+    [playerName],
+  );
+
   const handleNextLevel = () => {
     const diffKey = LEVEL_ORDER[currentLevelDiff];
     const currentList = LEVELS[diffKey];
@@ -172,21 +192,10 @@ export const useHuffmanGame = () => {
         setShowEndCampaignModal(true);
         confetti({ particleCount: 500, spread: 180 });
 
-        // === SALVA NO BANCO DE DADOS DA VERCEL ===
-        if (playerName && score > 0) {
-          fetch("/api/ranking", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ playerName: playerName, score: score }),
-          })
-            .then((res) => res.json())
-            .then((data) => {
-              console.log("Salvo no banco!", data);
-              // Espera 1.5s pra pessoa ver os confetes antes de abrir o placar
-              setTimeout(() => setShowLeaderboard(true), 1500);
-            })
-            .catch((err) => console.error("Erro ao salvar no ranking:", err));
-        }
+        // Salva o score final da campanha
+        saveScore(score).then(() => {
+          setTimeout(() => setShowLeaderboard(true), 1500);
+        });
       }
     }
   };
@@ -252,6 +261,11 @@ export const useHuffmanGame = () => {
 
         setLevelCompleted(true);
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+
+        // Se estiver no modo livre, salva o score de cada fase completada imediatamente
+        if (gameMode === "free") {
+          saveScore(finalScore);
+        }
 
         setIsValidating(false);
       }, 100);
