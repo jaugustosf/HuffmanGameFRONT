@@ -7,7 +7,7 @@ import {
   useEdgesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Trophy } from "lucide-react";
+import { Trophy, Info, X, GraduationCap } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useHuffmanGame } from "@/hooks/useHuffmanGame";
 import { GameControls } from "./game/GameControls";
@@ -29,6 +29,7 @@ const HuffmanBoard = () => {
   const game = useHuffmanGame();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isMobileInfoOpen, setIsMobileInfoOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -39,17 +40,29 @@ const HuffmanBoard = () => {
   return (
     <div className="w-full h-full flex flex-col gap-4">
       {/* === CABEÇALHO (Título centralizado + Botão na direita) === */}
-      <div className="relative w-full flex items-center justify-center shrink-0 py-1">
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 m-0">
+      <div className="relative w-full flex items-center justify-between shrink-0 py-2 px-2">
+        <div className="w-10 md:hidden" /> {/* Spacer para equilibrar o Ranking no mobile */}
+        <h1 className="text-xl md:text-2xl font-bold text-neutral-900 dark:text-neutral-100 m-0">
           Jogo de Huffman
         </h1>
 
-        <button
-          onClick={() => game.setShowLeaderboard(true)}
-          className="absolute right-0 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-1"
-        >
-          <Trophy className="w-4 h-4" /> Ranking
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => game.setShowTutorial(true)}
+            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-1"
+          >
+            <GraduationCap className="w-4 h-4" />
+            <span className="hidden md:inline">Explicação</span>
+          </button>
+
+          <button
+            onClick={() => game.setShowLeaderboard(true)}
+            className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-1"
+          >
+            <Trophy className="w-4 h-4" />
+            <span className="hidden md:inline">Ranking</span>
+          </button>
+        </div>
       </div>
 
       {/* === SEU TABULEIRO ORIGINAL === */}
@@ -74,7 +87,27 @@ const HuffmanBoard = () => {
           onNextLevel={game.handleNextLevel}
         />
 
-        <div className="absolute top-4 right-4 z-10 w-80 flex flex-col gap-3 max-h-[90vh] overflow-y-auto p-2 pb-4 scrollbar-hide">
+        {/* Botão de Toggle para Mobile */}
+        <button
+          onClick={() => setIsMobileInfoOpen(!isMobileInfoOpen)}
+          className="md:hidden absolute top-4 right-4 z-[20] flex items-center justify-center w-10 h-10 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-full shadow-lg text-neutral-700 dark:text-neutral-200 transition-all active:scale-95"
+          aria-label="Ver Informações"
+        >
+          {isMobileInfoOpen ? (
+            <X className="w-6 h-6" />
+          ) : (
+            <Info className="w-6 h-6" />
+          )}
+        </button>
+
+        <div
+          className={`absolute top-4 right-4 z-10 w-[85vw] sm:w-80 flex flex-col gap-3 max-h-[85vh] overflow-y-auto p-3 pb-4 scrollbar-hide transition-all duration-300 ease-in-out
+          ${
+            isMobileInfoOpen
+              ? "translate-x-0 opacity-100 flex bg-white/95 dark:bg-[#1B1B1B]/95 backdrop-blur-sm rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-2xl mt-12"
+              : "translate-x-full opacity-0 md:translate-x-0 md:opacity-100 hidden md:flex"
+          }`}
+        >
           <GameInfo
             gameMode={game.gameMode}
             successCount={game.successCount}

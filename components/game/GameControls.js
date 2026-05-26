@@ -34,7 +34,7 @@ export const GameControls = ({
   onNextLevel,
 }) => {
   return (
-    <div className="absolute z-10 top-4 left-4 w-96">
+    <div className="absolute z-10 top-4 left-4 w-[calc(100%-5rem)] sm:w-80 md:w-96">
       <Card className="shadow-lg opacity-95 gap-0 hover:opacity-100 transition-opacity bg-white dark:bg-neutral-800 dark:border-neutral-700">
         <CardHeader className="pb-1 pt-2">
           <div className="flex justify-between items-center">
